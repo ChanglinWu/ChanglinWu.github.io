@@ -1,6 +1,6 @@
 # _config.yml
 # title: "Blue Theme Demo"
-theme: jekyll-theme-midnight
+# theme: jekyll-theme-midnight
 css: "/style.scss"
 plugins:
   - jekyll-feed
