@@ -1,18 +1,41 @@
-name: publish site
-on: # 在什么时候触发工作流
-  push: # 在从本地main分支被push到GitHub仓库时
-    branches:
-      - main
-  pull_request: # 在main分支合并别人提的pr时
-    branches:
-      - main
-jobs: # 工作流的具体内容
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]  # 触发分支
+
+jobs:
   deploy:
-    runs-on: ubuntu-latest # 创建一个新的云端虚拟机 使用最新Ubuntu系统
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     steps:
-      - uses: actions/checkout@v2 # 先checkout到main分支
-      - uses: actions/setup-python@v2 # 再安装Python3和相关环境
-        with:
-          python-version: 3.x
-      - run: pip install mkdocs-material # 使用pip包管理工具安装mkdocs-material
-      - run: mkdocs gh-deploy --force # 使用mkdocs-material部署gh-pages分支
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject HTML
+        run: |
+          cat << EOF > index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Light Gray Background</title>
+              <style>
+                  body {
+                      # background-color: #f0f0f0;  # 浅灰色背景
+                      background-color: #000080; /* 深蓝色背景 */
+                      margin: 0;
+                      padding: 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>Hello World</h1>
+              <p>This page has a light gray background.</p>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy
+        uses: actions/deploy-pages@v4
