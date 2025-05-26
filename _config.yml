@@ -13,3 +13,19 @@ defaults:
       background_color: "#e6e68f"
       font_color: "#000080"
       github_page_url: "https://github.com/ChanglinWu"
+
+      # 导航菜单栏通常在你的 Jekyll 主题的 `_layouts` 或 `_includes` 文件夹中的 HTML 文件里（如 header.html 或 nav.html）进行编辑。
+      # 你可以在 _config.yml 中添加自定义导航链接，然后在主题模板中引用。例如：
+
+      # 添加自定义导航菜单
+      nav:
+        - title: "首页"
+          url: "/"
+        - title: "关于"
+          url: "/about/"
+        - title: "项目"
+          url: "/projects/"
+        - title: "联系"
+          url: "/contact/"
+
+      # 然后在你的主题布局文件（如 _includes/header.html）中用 Liquid 语法渲染这些菜单项。
