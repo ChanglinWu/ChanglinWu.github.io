@@ -7,7 +7,7 @@ title: My GitHub Page
 
 **Hello Visitor!** 👋
 
-[🔗 Visit My GitHub Profile](https://github.com/your-username)
+[🔗 Visit My GitHub Profile](https://github.com/ChanglinWu)
 
 ```python
 print("Welcome to my GitHub page!")
@@ -17,19 +17,19 @@ print("Welcome to my GitHub page!")
 
 <dl>
 <dt>Name</dt>
-<dd>Godzilla</dd>
+<dd>CHANGLIN</dd>
 <dt>Born</dt>
-<dd>1952</dd>
+<dd>1997</dd>
 <dt>Birthplace</dt>
-<dd>Japan</dd>
-<dt>Color</dt>
-<dd>Green</dd>
+<dd>CN</dd>
+<dt>Constellation</dt>
+<dd>Capricorn</dd>
 </dl>
 
 ```
-Long, single-line code blocks should not wrap. They should horizontally scroll if they are too long. This line should be long enough to demonstrate this.
+Hong Kong, China
 ```
 
 ```
-The final element.
+Wish the best for the world!
 ```
