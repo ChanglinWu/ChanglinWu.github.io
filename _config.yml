@@ -11,35 +11,93 @@
 # theme: jekyll-theme-time-machine
 # theme: jekyll-theme-architect
 # theme: jekyll-theme-dinky
-theme: jekyll-theme-hacker
+# theme: jekyll-theme-hacker
 # theme: jekyll-theme-primer
 # theme: jekyll-theme-slate
 # theme: jekyll-theme-just-the-docs
-css: "/style.scss"
+
+# css: "/style.scss"
+# plugins:
+#   - jekyll-feed
+
+# defaults:
+#   -
+#     scope:
+#       path: ""
+#     values:
+#       background_color: "#e6e68f"
+#       font_color: "#000080"
+#       github_page_url: "https://github.com/ChanglinWu"
+
+#       # 导航菜单栏通常在你的 Jekyll 主题的 `_layouts` 或 `_includes` 文件夹中的 HTML 文件里（如 header.html 或 nav.html）进行编辑。
+#       # 你可以在 _config.yml 中添加自定义导航链接，然后在主题模板中引用。例如：
+
+#       # 添加自定义导航菜单
+#       nav:
+#         - title: "首页"
+#           url: "/"
+#         - title: "关于"
+#           url: "/about/"
+#         - title: "项目"
+#           url: "/projects/"
+#         - title: "联系"
+#           url: "/contact/"
+
+#       # 然后在你的主题布局文件（如 _includes/header.html）中用 Liquid 语法渲染这些菜单项。
+
+
+# _config.yml
+
+# ================ 基础配置 ================
+title: "Blue Horizon Hub"
+description: "A Clean & Modern GitHub Pages Site"
+baseurl: ""
+url: "https://yourusername.github.io"
+
+# ================ 主题配置 ================
+# 推荐支持自定义颜色的主题（二选一）
+theme: jekyll-theme-cayman       # 方案A：官方主题，支持变量覆盖
+# remote_theme: pages-themes/cayman@v0.2.0  # 使用固定版本确保兼容性
+
+# theme: jekyll-theme-architect  # 方案B：适合技术文档的蓝色系主题
+
+# ================ 蓝色主题变量 ================
+# Cayman 主题可配置变量（其他主题需调整）
+title_color: "#FFFFFF"          # 标题颜色（白）
+description_color: "#E0F2FF"    # 描述文字颜色（浅蓝）
+background_color: "#1A237E"     # 深蓝背景（Material Indigo 900）
+header_background: "#0D47A1"    # 头部背景（Material Blue 900）
+button_color: "#2196F3"         # 按钮颜色（Material Blue 500）
+
+# ================ 自定义样式 ================
+css: "/assets/css/blue-theme.scss"
+
+# ================ 插件配置 ================
 plugins:
   - jekyll-feed
+  - jekyll-seo-tag
 
-defaults:
-  -
-    scope:
-      path: ""
-    values:
-      background_color: "#e6e68f"
-      font_color: "#000080"
-      github_page_url: "https://github.com/ChanglinWu"
+# ================ 导航菜单 ================
+# 需主题支持导航配置（如Architect主题）
+nav:
+  - title: "🏠 Home"
+    url: "/"
+  - title: "📚 Projects"
+    url: "/projects/"
+  - title: "📄 Blog"
+    url: "/blog/"
+  - title: "👨💻 GitHub"
+    url: "https://github.com/yourusername"
+    external: true
 
-      # 导航菜单栏通常在你的 Jekyll 主题的 `_layouts` 或 `_includes` 文件夹中的 HTML 文件里（如 header.html 或 nav.html）进行编辑。
-      # 你可以在 _config.yml 中添加自定义导航链接，然后在主题模板中引用。例如：
+# ================ 文件排除 ================
+exclude:
+  - "node_modules"
+  - "Gemfile"
+  - "Gemfile.lock"
+  - "README.md"
 
-      # 添加自定义导航菜单
-      nav:
-        - title: "首页"
-          url: "/"
-        - title: "关于"
-          url: "/about/"
-        - title: "项目"
-          url: "/projects/"
-        - title: "联系"
-          url: "/contact/"
-
-      # 然后在你的主题布局文件（如 _includes/header.html）中用 Liquid 语法渲染这些菜单项。
+# ================ 高级SEO配置 ================
+twitter:
+  username: yourtwitterhandle
+google_analytics: UA-XXXXX-Y
