@@ -1,44 +1,40 @@
-# Site settings
-title: Midnight theme
-description: Midnight is a theme for GitHub Pages.
-show_downloads: true
-# google_analytics: your-google-analytics-id
+name: Deploy to GitHub Pages
 
-# Theme settings
-theme: null
-sass:
-  style: compressed
+on:
+  push:
+    branches: [ "main" ]  # 触发分支
 
-# Custom colors (light gray background)
-colors:
-  background: "#f5f5f5"    # Light gray background
-  text: "#222222"
-  link: "#3366cc"
-  link_hover: "#003366"
-  header: "#e0e0e0"
-  nav: "#cccccc"
-  footer: "#f5f5f5"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-# Exclude default theme assets
-exclude:
-  - "assets/css/style.scss"
-  - "assets/css/just-the-docs.scss"
+      - name: Inject HTML
+        run: |
+          cat << EOF > index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Light Gray Background</title>
+              <style>
+                  body {
+                      background-color: #f0f0f0;  # 浅灰色背景
+                      margin: 0;
+                      padding: 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>Hello World</h1>
+              <p>This page has a light gray background.</p>
+          </body>
+          </html>
+          EOF
 
-# Custom CSS
-defaults:
-  -
-    scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "default"
-      css: "/assets/css/custom-gray.css"
-      markdown: kramdown
-      kramdown:
-        input: GFM
-      permalink: pretty
-
-# Plugins (optional, for better Markdown and SEO)
-plugins:
-  - jekyll-seo-tag
-  - jekyll-sitemap
+      - name: Deploy
+        uses: actions/deploy-pages@v4
