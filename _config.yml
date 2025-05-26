@@ -1,5 +1,5 @@
 # _config.yml
-title: "Blue Theme Demo"
+# title: "Blue Theme Demo"
 theme: minima
 css: "/style.scss"
 plugins:
