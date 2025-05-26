@@ -52,11 +52,11 @@
 title: "Blue Horizon Hub"
 description: "A Clean & Modern GitHub Pages Site"
 baseurl: ""
-url: "https://yourusername.github.io"
+url: "https://github.com/ChanglinWu"
 
 # ================ 主题配置 ================
 # 推荐支持自定义颜色的主题（二选一）
-theme: jekyll-theme-cayman       # 方案A：官方主题，支持变量覆盖
+theme: jekyll-theme-hacker       # 方案A：官方主题，支持变量覆盖
 # remote_theme: pages-themes/cayman@v0.2.0  # 使用固定版本确保兼容性
 
 # theme: jekyll-theme-architect  # 方案B：适合技术文档的蓝色系主题
@@ -87,7 +87,7 @@ nav:
   - title: "📄 Blog"
     url: "/blog/"
   - title: "👨💻 GitHub"
-    url: "https://github.com/yourusername"
+    url: "https://github.com/ChanglinWu"
     external: true
 
 # ================ 文件排除 ================
@@ -98,6 +98,6 @@ exclude:
   - "README.md"
 
 # ================ 高级SEO配置 ================
-twitter:
-  username: yourtwitterhandle
-google_analytics: UA-XXXXX-Y
+# twitter:
+#   username: yourtwitterhandle
+# google_analytics: UA-XXXXX-Y
