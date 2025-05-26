@@ -4,3 +4,11 @@ theme: minima
 css: "/style.scss"
 plugins:
   - jekyll-feed
+
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      background_color: "#ffffff"
+      font_color: "#222222"
