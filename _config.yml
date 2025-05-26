@@ -10,6 +10,6 @@ defaults:
     scope:
       path: ""
     values:
-      background_color: "#ffffff"
+      background_color: "#e6e68f"
       font_color: "#000080"
-      github_page_url: "https://changlinwu.github.io/"
+      github_page_url: "https://github.com/ChanglinWu"
