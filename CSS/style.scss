@@ -23,3 +23,19 @@ $link-hover-color: darken($brand-color, 15%) !default;
     background-color: darken($brand-color, 5%);
   }
 }
+
+body {
+  background: linear-gradient(135deg, 
+    lighten($brand-color, 45%) 0%,
+    lighten($brand-color, 35%) 100%
+  );
+  min-height: 100vh;
+}
+
+.highlight {
+  background-color: rgba($brand-color, 0.1);
+  border-left: 4px solid $brand-color;
+  pre {
+    color: darken($brand-color, 30%);
+  }
+}
