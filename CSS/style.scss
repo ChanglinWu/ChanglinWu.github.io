@@ -2,7 +2,7 @@
 
 // 自定义蓝色主题
 $brand-color:      #2196F3 !default;  // Material Design Blue 500
-$background-color: #E3F2FD !default;  // 浅蓝色背景
+$background-color: #0a8dea !default;  // 浅蓝色背景
 $text-color:       #0D47A1 !default;  // 深蓝色文本
 $link-color:       $brand-color !default;
 $link-hover-color: darken($brand-color, 15%) !default;
@@ -37,5 +37,55 @@ body {
   border-left: 4px solid $brand-color;
   pre {
     color: darken($brand-color, 30%);
+  }
+}
+
+// 基础按钮样式
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  margin: 8px;
+  border-radius: 25px;  // 胶囊形状
+  text-decoration: none !important;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+  // 默认主题色
+  &-primary {
+    background: $brand-color;
+    color: white !important;
+    border: 2px solid darken($brand-color, 10%);
+
+    &:hover {
+      background: darken($brand-color, 10%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+  }
+
+  // 次级按钮
+  &-secondary {
+    background: lighten($brand-color, 40%);
+    color: $text-color !important;
+    border: 2px solid $brand-color;
+
+    &:hover {
+      background: lighten($brand-color, 35%);
+    }
+  }
+
+  // 带图标按钮
+  &-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
   }
 }
