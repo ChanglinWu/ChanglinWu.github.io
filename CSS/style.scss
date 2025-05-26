@@ -8,7 +8,7 @@ $link-color:       $brand-color !default;
 $link-hover-color: darken($brand-color, 15%) !default;
 
 // 导入主题原始文件（必须放在变量覆盖之后）
-@import "minima";
+@import "midnight";
 
 // 增强蓝色主题元素
 .site-header {
