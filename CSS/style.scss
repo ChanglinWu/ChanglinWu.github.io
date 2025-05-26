@@ -1,5 +1,25 @@
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-color: #2d2d2d;  /* 暗色背景 */
-    }
+// 这是一个自定义的主题样式文件，基于 Jekyll 的 minima 主题
+
+// 自定义蓝色主题
+$brand-color:      #2196F3 !default;  // Material Design Blue 500
+$background-color: #E3F2FD !default;  // 浅蓝色背景
+$text-color:       #0D47A1 !default;  // 深蓝色文本
+$link-color:       $brand-color !default;
+$link-hover-color: darken($brand-color, 15%) !default;
+
+// 导入主题原始文件（必须放在变量覆盖之后）
+@import "minima";
+
+// 增强蓝色主题元素
+.site-header {
+  border-top: 5px solid $brand-color;
+  border-bottom: 1px solid lighten($brand-color, 40%);
+}
+
+.btn {
+  background-color: $brand-color;
+  border-color: darken($brand-color, 10%);
+  &:hover {
+    background-color: darken($brand-color, 5%);
+  }
 }

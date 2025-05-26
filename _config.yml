@@ -1,41 +1,6 @@
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [ "main" ]  # 触发分支
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Inject HTML
-        run: |
-          cat << EOF > index.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Light Gray Background</title>
-              <style>
-                  body {
-                      # background-color: #f0f0f0;  # 浅灰色背景
-                      background-color: #000080; /* 深蓝色背景 */
-                      margin: 0;
-                      padding: 20px;
-                  }
-              </style>
-          </head>
-          <body>
-              <h1>Hello World</h1>
-              <p>This page has a light gray background.</p>
-          </body>
-          </html>
-          EOF
-
-      - name: Deploy
-        uses: actions/deploy-pages@v4
+# _config.yml
+title: "Blue Theme Demo"
+theme: minima
+css: "/style.scss"
+plugins:
+  - jekyll-feed
