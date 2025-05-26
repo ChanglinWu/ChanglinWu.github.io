@@ -11,4 +11,5 @@ defaults:
       path: ""
     values:
       background_color: "#ffffff"
-      font_color: "#222222"
+      font_color: "#000080"
+      github_page_url: "https://changlinwu.github.io/"

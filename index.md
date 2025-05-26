@@ -13,7 +13,7 @@ title: My GitHub Page
 print("Welcome to my GitHub page!")
 ```
 
-### Definition lists can be used with HTML syntax.
+### About Me
 
 <dl>
 <dt>Name</dt>
