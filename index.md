@@ -4,7 +4,11 @@
 
 ---
 layout: default
+title: My Page
 ---
+
+# Welcome
+This is a page with custom background.
 
 <!-- Text can be **bold**, _italic_, or ~~strikethrough~~. -->
 **Welcome to my GitHub Pages site!**
