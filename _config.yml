@@ -1,6 +1,20 @@
 # _config.yml
 # title: "Blue Theme Demo"
 # theme: jekyll-theme-midnight
+# theme: jekyll-theme-cayman
+# theme: jekyll-theme-minimal
+# theme: jekyll-theme-modernist
+# theme: jekyll-theme-slate
+# theme: jekyll-theme-tactile
+# theme: jekyll-theme-leap-day
+# theme: jekyll-theme-merlot
+# theme: jekyll-theme-time-machine
+# theme: jekyll-theme-architect
+# theme: jekyll-theme-dinky
+theme: jekyll-theme-hacker
+# theme: jekyll-theme-primer
+# theme: jekyll-theme-slate
+# theme: jekyll-theme-just-the-docs
 css: "/style.scss"
 plugins:
   - jekyll-feed
