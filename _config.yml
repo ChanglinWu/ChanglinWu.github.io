@@ -1,22 +1,23 @@
-# title: Midnight theme
-# description: Midnight is a theme for GitHub Pages.
-# show_downloads: true
-# google_analytics:
-# theme: jekyll-theme-midnight
-# Custom gray theme settings
+# Site settings
+title: Midnight theme
+description: Midnight is a theme for GitHub Pages.
+show_downloads: true
+# google_analytics: your-google-analytics-id
+
+# Theme settings
 theme: null
 sass:
   style: compressed
 
-# Custom colors
+# Custom colors (light gray background)
 colors:
-  background: "#222222"
-  text: "#e0e0e0"
-  link: "#b0b0b0"
-  link_hover: "#ffffff"
-  header: "#333333"
-  nav: "#444444"
-  footer: "#222222"
+  background: "#f5f5f5"    # Light gray background
+  text: "#222222"
+  link: "#3366cc"
+  link_hover: "#003366"
+  header: "#e0e0e0"
+  nav: "#cccccc"
+  footer: "#f5f5f5"
 
 # Exclude default theme assets
 exclude:
@@ -32,3 +33,12 @@ defaults:
     values:
       layout: "default"
       css: "/assets/css/custom-gray.css"
+      markdown: kramdown
+      kramdown:
+        input: GFM
+      permalink: pretty
+
+# Plugins (optional, for better Markdown and SEO)
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
