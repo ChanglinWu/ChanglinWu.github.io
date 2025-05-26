@@ -23,7 +23,8 @@ jobs:
               <title>Light Gray Background</title>
               <style>
                   body {
-                      background-color: #f0f0f0;  # 浅灰色背景
+                      # background-color: #f0f0f0;  # 浅灰色背景
+                      background-color: #000080; /* 深蓝色背景 */
                       margin: 0;
                       padding: 20px;
                   }
