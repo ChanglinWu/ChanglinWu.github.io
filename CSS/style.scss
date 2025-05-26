@@ -1,14 +1,14 @@
 // 这是一个自定义的主题样式文件，基于 Jekyll 的 minima 主题
 
 // 自定义蓝色主题
-$brand-color:      #2196F3 !default;  // Material Design Blue 500
+$brand-color:      #0f6851 !default;  // Material Design Blue 500
 $background-color: #0a8dea !default;  // 浅蓝色背景
 $text-color:       #0D47A1 !default;  // 深蓝色文本
 $link-color:       $brand-color !default;
 $link-hover-color: darken($brand-color, 15%) !default;
 
 // 导入主题原始文件（必须放在变量覆盖之后）
-@import "midnight";
+// @import "midnight"; // 已注释：未找到 midnight 主题文件，请确保路径正确或已安装
 
 // 增强蓝色主题元素
 .site-header {
@@ -25,7 +25,7 @@ $link-hover-color: darken($brand-color, 15%) !default;
 }
 
 body {
-  background: linear-gradient(135deg, 
+  background: linear-gradient(135deg,
     lighten($brand-color, 45%) 0%,
     lighten($brand-color, 35%) 100%
   );
