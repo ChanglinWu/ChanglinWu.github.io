@@ -5,9 +5,9 @@ title: My GitHub Page
 
 # Welcome to My GitHub Hub
 
-**Hello Visitor!** 👋
+**Hello Visitor!** :)
 
-[🔗 Visit My GitHub Profile](https://github.com/ChanglinWu)
+[:( Visit My GitHub Profile](https://github.com/ChanglinWu)
 
 ```python
 print("Welcome to my GitHub page!")
