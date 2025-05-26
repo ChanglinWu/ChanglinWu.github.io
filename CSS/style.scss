@@ -33,7 +33,7 @@ body {
 }
 
 .highlight {
-  background-color: rgba($brand-color, 0.1);
+  background-color: rgba(red($brand-color), green($brand-color), blue($brand-color), 0.1);
   border-left: 4px solid $brand-color;
   pre {
     color: darken($brand-color, 30%);
