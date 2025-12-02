@@ -33,4 +33,4 @@ Hong Kong, China
 ```
 Wish the best for the world!
 ```
-<div id="time_is_link" style="font-size:36px"></div>
+ttps://time.is/Hong_Kong</iframe>
