@@ -34,3 +34,17 @@ Hong Kong, China
 Wish the best for the world!
 ```
 
+# Kowloon Tong Time
+
+<p>Real-time clock from time.is</p>
+
+<style>
+iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+</style>
+
+<iframe src="https://time.is/Kowloon>
+
