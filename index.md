@@ -31,3 +31,5 @@ Wish the best for the world!
 # Links:
 [Kowloon Tong Time](https://changlinwu.github.io/hko_cli_terminal_web_app.html)
 
+[Py3 practice](https://changlinwu.github.io/python_idle_online_teaching_platform.html)
+
