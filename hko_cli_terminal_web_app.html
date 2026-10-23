@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKO Terminal CLI — Hong Kong Observatory Interactive Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Terminal Styling -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Themes Definition */
+        :root {
+            --bg-color: #0d1117;
+            --text-color: #00ff66;
+            --text-dim: #008833;
+            --border-color: #00ff6644;
+            --accent-color: #00ffcc;
+            --font-mono: 'Fira Code', monospace;
+            --font-crt: 'VT323', monospace;
+        }
+
+        body.theme-matrix {
+            --bg-color: #050a05;
+            --text-color: #00ff66;
+            --text-dim: #006622;
+            --border-color: #00ff6633;
+            --accent-color: #66ff99;
+        }
+
+        body.theme-amber {
+            --bg-color: #0f0a00;
+            --text-color: #ffb000;
+            --text-dim: #885e00;
+            --border-color: #ffb00033;
+            --accent-color: #ffd066;
+        }
+
+        body.theme-cyberpunk {
+            --bg-color: #080811;
+            --text-color: #00f3ff;
+            --text-dim: #007788;
+            --border-color: #ff005555;
+            --accent-color: #ff0055;
+        }
+
+        body.theme-dark {
+            --bg-color: #0f172a;
+            --text-color: #38bdf8;
+            --text-dim: #1e3a8a;
+            --border-color: #38bdf833;
+            --accent-color: #f43f5e;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Scanline CRT FX Overlay */
+        .scanline-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.25) 50%,
+                rgba(0, 0, 0, 0.25)
+            );
+            background-size: 100% 4px;
+            opacity: 0.8;
+        }
+
+        /* Subtle Screen Glow Effect */
+        .crt-screen {
+            text-shadow: 0 0 2px var(--text-color);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-dim);
+            border-radius: 4px;
+        }
+
+        /* Custom Input Prompt */
+        .cli-input {
+            background: transparent;
+            outline: none;
+            color: var(--text-color);
+            caret-color: var(--text-color);
+        }
+
+        .border-theme {
+            border-color: var(--border-color);
+        }
+
+        .bg-dim {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="theme-matrix min-h-screen flex flex-col justify-between p-2 md:p-6 crt-screen select-text">
+
+    <!-- Scanline Effect Toggle Overlay -->
+    <div id="scanlines" class="scanline-overlay"></div>
+
+    <!-- Main Container -->
+    <div class="max-w-5xl mx-auto w-full flex-grow flex flex-col border border-theme rounded-lg bg-black/40 backdrop-blur shadow-2xl overflow-hidden my-auto">
+        
+        <!-- Terminal Header Controls Bar -->
+        <div class="bg-black/60 px-4 py-3 border-b border-theme flex flex-wrap items-center justify-between gap-3 text-xs">
+            <!-- Left status indicators -->
+            <div class="flex items-center space-x-2">
+                <span class="inline-block w-3 h-3 rounded-full bg-red-500/80 animate-pulse"></span>
+                <span class="inline-block w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                <span class="inline-block w-3 h-3 rounded-full bg-green-500/80"></span>
+                <span class="ml-2 font-bold tracking-wider opacity-80 hidden sm:inline">HKO-OBSERVATORY-CLI v2.0</span>
+            </div>
+
+            <!-- Header Quick Stats -->
+            <div class="flex items-center space-x-4 text-xs font-mono opacity-90">
+                <div id="header-clock" class="text-accent font-bold">HKT --:--:--</div>
+                <div class="hidden md:block">TZ: <span class="opacity-75">Asia/Hong_Kong</span></div>
+            </div>
+
+            <!-- Controls (Theme & CRT) -->
+            <div class="flex items-center space-x-3">
+                <label class="flex items-center cursor-pointer select-none">
+                    <input type="checkbox" id="crt-toggle" checked class="sr-only">
+                    <span class="text-[10px] sm:text-xs opacity-75 mr-1">CRT FX</span>
+                    <div id="crt-indicator" class="w-7 h-4 bg-green-600 rounded-full p-0.5 transition duration-200">
+                        <div class="w-3 h-3 bg-white rounded-full translate-x-3 transition duration-200"></div>
+                    </div>
+                </label>
+
+                <!-- Theme Selector -->
+                <select id="theme-select" class="bg-black border border-theme text-xs px-2 py-1 rounded cursor-pointer outline-none">
+                    <option value="theme-matrix">Matrix Green</option>
+                    <option value="theme-amber">Amber CRT</option>
+                    <option value="theme-cyberpunk">Cyberpunk Neon</option>
+                    <option value="theme-dark">Classic Dark</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Quick Command Buttons for Touch & Easy Access -->
+        <div class="bg-black/30 border-b border-theme/50 px-4 py-2 flex flex-wrap gap-2 text-xs">
+            <span class="text-xs opacity-50 py-0.5 flex items-center">Quick Run:</span>
+            <button onclick="executeQuickCmd('weather')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105">[w] Weather</button>
+            <button onclick="executeQuickCmd('warning')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105 text-amber-400">[warn] Warnings</button>
+            <button onclick="executeQuickCmd('forecast')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105">[f] 9-Day Forecast</button>
+            <button onclick="executeQuickCmd('date')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105">[d] HK Time</button>
+            <button onclick="executeQuickCmd('holiday')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105">[h] Public Holidays</button>
+            <button onclick="executeQuickCmd('help')" class="px-2 py-0.5 bg-theme/10 hover:bg-theme/30 border border-theme rounded transition hover:scale-105 opacity-75"> Help</button>
+            <button onclick="executeQuickCmd('clear')" class="px-2 py-0.5 border border-red-500/40 text-red-400 rounded hover:bg-red-950/30 transition">Clear</button>
+        </div>
+
+        <!-- Main Terminal Scroll Window -->
+        <div id="terminal-screen" class="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 text-sm md:text-base leading-relaxed font-mono">
+            <!-- Output Buffer dynamically populated by JS -->
+            <div id="output-container" class="space-y-4"></div>
+
+            <!-- Active Prompt Input Line -->
+            <div id="input-line" class="flex items-center space-x-2 pt-2">
+                <span class="text-accent font-bold flex-shrink-0">hko@hk-observatory:~$</span>
+                <input type="text" id="cli-input" class="cli-input flex-grow w-full font-mono text-sm md:text-base" focus autocomplete="off" spellcheck="false" placeholder="Type command (e.g. 'w', 'warn', 'f', 'd', 'h', 'help')...">
+            </div>
+        </div>
+
+        <!-- Footer Bar -->
+        <div class="bg-black/80 px-4 py-2 border-t border-theme flex flex-wrap justify-between items-center text-[11px] opacity-70">
+            <div>Data Source: <a href="https://www.hko.gov.hk" target="_blank" class="underline hover:text-white">Hong Kong Observatory (HKO) Open Data</a></div>
+            <div>GitHub Pages Ready • Single HTML Deployment</div>
+        </div>
+    </div>
+
+    <!-- Terminal JavaScript Code -->
+    <script>
+        // --- State Management ---
+        const state = {
+            cmdHistory: [],
+            historyIndex: -1,
+            hkHolidaysCache: null
+        };
+
+        // Static HK Holidays Fallback Data (2026/2027)
+        const HK_PUBLIC_HOLIDAYS_FALLBACK = [
+            { date: "2026-01-01", name: "元旦 (New Year's Day)" },
+            { date: "2026-02-17", name: "農曆年初一 (Lunar New Year)" },
+            { date: "2026-02-18", name: "農曆年初二 (Lunar New Year Day 2)" },
+            { date: "2026-02-19", name: "農曆年初三 (Lunar New Year Day 3)" },
+            { date: "2026-04-03", name: "耶穌受難節 (Good Friday)" },
+            { date: "2026-04-04", name: "清明節 / 復活節前夕 (Ching Ming Festival)" },
+            { date: "2026-04-06", name: "復活節星期一 (Easter Monday)" },
+            { date: "2026-05-01", name: "勞工節 (Labour Day)" },
+            { date: "2026-05-24", name: "佛誕 (Buddha's Birthday)" },
+            { date: "2026-06-19", name: "端午節 (Tuen Ng Festival)" },
+            { date: "2026-07-01", name: "香港特別行政區成立紀念日 (HKSAR Day)" },
+            { date: "2026-09-26", name: "中秋節翌日 (Day after Chinese Mid-Autumn Festival)" },
+            { date: "2026-10-01", name: "國慶日 (National Day)" },
+            { date: "2026-10-19", name: "重陽節 (Chung Yeung Festival)" },
+            { date: "2026-12-25", name: "聖誕節 (Christmas Day)" },
+            { date: "2026-12-26", name: "聖誕節後第一個周日 (Boxing Day)" },
+            { date: "2027-01-01", name: "元旦 (New Year's Day)" },
+            { date: "2027-02-06", name: "農曆年初一 (Lunar New Year)" },
+            { date: "2027-02-07", name: "農曆年初二 (Lunar New Year Day 2)" },
+            { date: "2027-02-08", name: "農曆年初三 (Lunar New Year Day 3)" },
+            { date: "2027-03-26", name: "耶穌受難節 (Good Friday)" },
+            { date: "2027-04-05", name: "清明節 (Ching Ming Festival)" },
+            { date: "2027-05-13", name: "佛誕 (Buddha's Birthday)" },
+            { date: "2027-06-09", name: "端午節 (Tuen Ng Festival)" },
+            { date: "2027-07-01", name: "香港特區成立紀念日 (HKSAR Day)" },
+            { date: "2027-10-01", name: "國慶日 (National Day)" },
+            { date: "2027-10-08", name: "重陽節 (Chung Yeung Festival)" },
+            { date: "2027-12-25", name: "聖誕節 (Christmas Day)" }
+        ];
+
+        // --- DOM Elements ---
+        const outputContainer = document.getElementById('output-container');
+        const cliInput = document.getElementById('cli-input');
+        const terminalScreen = document.getElementById('terminal-screen');
+        const headerClock = document.getElementById('header-clock');
+        const themeSelect = document.getElementById('theme-select');
+        const crtToggle = document.getElementById('crt-toggle');
+        const crtIndicator = document.getElementById('crt-indicator');
+        const scanlinesEl = document.getElementById('scanlines');
+
+        // --- Initialization ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderBanner();
+            startLiveClock();
+            cliInput.focus();
+
+            // Auto focus terminal input on click anywhere inside screen
+            terminalScreen.addEventListener('click', () => {
+                const selection = window.getSelection();
+                if (!selection || selection.toString().length === 0) {
+                    cliInput.focus();
+                }
+            });
+        });
+
+        // --- Live Clock ---
+        function startLiveClock() {
+            function update() {
+                const now = new Date();
+                const hktString = new Intl.DateTimeFormat('en-GB', {
+                    timeZone: 'Asia/Hong_Kong',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                }).format(now);
+                headerClock.innerText = `HKT ${hktString}`;
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        // --- Theme & CRT Toggle Logic ---
+        themeSelect.addEventListener('change', (e) => {
+            document.body.className = `${e.target.value} min-h-screen flex flex-col justify-between p-2 md:p-6 crt-screen select-text`;
+            appendOutput(`<div class="text-xs opacity-75">[SYSTEM] Theme changed to: ${e.target.options[e.target.selectedIndex].text}</div>`);
+        });
+
+        crtToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                scanlinesEl.style.display = 'block';
+                crtIndicator.classList.replace('bg-gray-600', 'bg-green-600');
+                crtIndicator.firstElementChild.classList.replace('translate-x-0', 'translate-x-3');
+            } else {
+                scanlinesEl.style.display = 'none';
+                crtIndicator.classList.replace('bg-green-600', 'bg-gray-600');
+                crtIndicator.firstElementChild.classList.replace('translate-x-3', 'translate-x-0');
+            }
+        });
+
+        // --- Input & Keyboard Handler ---
+        cliInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const cmd = cliInput.value.trim();
+                cliInput.value = '';
+                if (cmd !== '') {
+                    state.cmdHistory.push(cmd);
+                    state.historyIndex = state.cmdHistory.length;
+                    await processCommand(cmd);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (state.cmdHistory.length > 0 && state.historyIndex > 0) {
+                    state.historyIndex--;
+                    cliInput.value = state.cmdHistory[state.historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (state.historyIndex < state.cmdHistory.length - 1) {
+                    state.historyIndex++;
+                    cliInput.value = state.cmdHistory[state.historyIndex];
+                } else {
+                    state.historyIndex = state.cmdHistory.length;
+                    cliInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                autoCompleteCommand();
+            }
+        });
+
+        function autoCompleteCommand() {
+            const val = cliInput.value.toLowerCase().trim();
+            const commands = ['weather', 'warning', 'forecast', 'date', 'holiday', 'clear', 'theme', 'help', 'banner'];
+            const match = commands.find(c => c.startsWith(val));
+            if (match) {
+                cliInput.value = match;
+            }
+        }
+
+        function executeQuickCmd(cmd) {
+            cliInput.value = '';
+            processCommand(cmd);
+        }
+
+        // --- Output Utility Functions ---
+        function appendOutput(htmlContent) {
+            const block = document.createElement('div');
+            block.className = 'space-y-2';
+            block.innerHTML = htmlContent;
+            outputContainer.appendChild(block);
+            terminalScreen.scrollTop = terminalScreen.scrollHeight;
+        }
+
+        function printPromptCommand(cmd) {
+            appendOutput(`
+                <div class="flex items-center space-x-2 text-sm opacity-90 mt-4 border-t border-theme/20 pt-2">
+                    <span class="text-accent font-bold">hko@hk-observatory:~$</span>
+                    <span class="font-bold underline">${escapeHtml(cmd)}</span>
+                </div>
+            `);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // --- ASCII Art Banner ---
+        function renderBanner() {
+            appendOutput(`
+<pre class="font-mono text-[10px] sm:text-xs md:text-sm leading-tight text-emerald-400 font-bold overflow-x-auto">
+  ██╗██╗██╗  ██╗ ██████╗      ██████╗██╗     ██╗
+  ██║██║██║  ██║██╔═══██╗    ██╔════╝██║     ██║
+  ███████║███████║██║   ██║    ██║     ██║     ██║
+  ██╔══██║██╔══██║██║   ██║    ██║     ██║     ██║
+  ██║  ██║██║  ██║╚██████╔╝    ╚██████╗███████╗██║
+  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝      ╚═════╝╚══════╝╚═╝ v2.0
+</pre>
+<div class="text-xs space-y-1">
+    <p><span class="text-accent">★ Hong Kong Observatory Interactive Terminal (HKO CLI)</span></p>
+    <p class="opacity-75">Type <span class="text-yellow-300 font-bold">help</span> to list commands, or use shorthand aliases: <span class="underline">w</span> (weather), <span class="underline">warn</span> (warnings), <span class="underline">f</span> (forecast), <span class="underline">d</span> (date), <span class="underline">h</span> (holidays).</p>
+</div>
+            `);
+        }
+
+        // --- Command Evaluator & Processor ---
+        async function processCommand(cmdInput) {
+            printPromptCommand(cmdInput);
+
+            // Normalize command string
+            const cleaned = cmdInput.trim().toLowerCase();
+            const parts = cleaned.split(':');
+            const mainCmd = parts[0];
+            const aliasCmd = parts[1] || '';
+
+            // Handle composite shorthand like "weather:w" or "date:d"
+            let targetCmd = mainCmd;
+            if (['w', 'weather'].includes(mainCmd) || ['w', 'weather'].includes(aliasCmd)) targetCmd = 'weather';
+            else if (['warn', 'warning', 'warnsum'].includes(mainCmd) || ['warn', 'warning'].includes(aliasCmd)) targetCmd = 'warning';
+            else if (['f', 'fc', 'forecast'].includes(mainCmd) || ['f', 'forecast'].includes(aliasCmd)) targetCmd = 'forecast';
+            else if (['d', 'date', 'time'].includes(mainCmd) || ['d', 'date'].includes(aliasCmd)) targetCmd = 'date';
+            else if (['h', 'holiday', 'holidays', 'vac', 'hols'].includes(mainCmd) || ['h', 'holiday'].includes(aliasCmd)) targetCmd = 'holiday';
+
+            switch (targetCmd) {
+                case 'help':
+                case '?':
+                    renderHelp();
+                    break;
+
+                case 'weather':
+                case 'w':
+                    await fetchRealtimeWeather();
+                    break;
+
+                case 'warning':
+                case 'warn':
+                    await fetchWeatherWarnings();
+                    break;
+
+                case 'forecast':
+                case 'f':
+                    await fetchForecast();
+                    break;
+
+                case 'date':
+                case 'd':
+                case 'time':
+                    renderHKTime();
+                    break;
+
+                case 'holiday':
+                case 'holidays':
+                case 'h':
+                    await fetchPublicHolidays();
+                    break;
+
+                case 'clear':
+                case 'cls':
+                    outputContainer.innerHTML = '';
+                    break;
+
+                case 'banner':
+                    renderBanner();
+                    break;
+
+                case 'theme':
+                    const nextTheme = parts[1] ? `theme-${parts[1]}` : 'theme-matrix';
+                    themeSelect.value = nextTheme;
+                    themeSelect.dispatchEvent(new Event('change'));
+                    break;
+
+                default:
+                    appendOutput(`
+                        <div class="text-red-400 text-xs">
+                            Command not recognized: "<span class="font-bold">${escapeHtml(cmdInput)}</span>". 
+                            Type <button onclick="executeQuickCmd('help')" class="underline text-yellow-300">help</button> for available commands.
+                        </div>
+                    `);
+                    break;
+            }
+        }
+
+        // --- Command: HELP ---
+        function renderHelp() {
+            appendOutput(`
+<div class="border border-theme/40 p-3 rounded bg-black/40 text-xs space-y-2">
+    <div class="text-accent font-bold border-b border-theme/30 pb-1">AVAILABLE COMMANDS & SHORTCUTS</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+        <div><span class="text-yellow-300 font-bold">weather</span> or <span class="text-yellow-300 font-bold">w</span> or <span class="text-yellow-300 font-bold">weather:w</span></div>
+        <div class="opacity-80">Live Hong Kong temperature, humidity, UV & district breakdown.</div>
+
+        <div><span class="text-yellow-300 font-bold">warning</span> or <span class="text-yellow-300 font-bold">warn</span> or <span class="text-yellow-300 font-bold">warnsum</span></div>
+        <div class="opacity-80">Active HKO weather warnings (Typhoon, Rainstorm, Hot/Cold).</div>
+
+        <div><span class="text-yellow-300 font-bold">forecast</span> or <span class="text-yellow-300 font-bold">f</span> or <span class="text-yellow-300 font-bold">fc</span></div>
+        <div class="opacity-80">9-Day weather forecast with min/max temp range bars.</div>
+
+        <div><span class="text-yellow-300 font-bold">date</span> or <span class="text-yellow-300 font-bold">d</span> or <span class="text-yellow-300 font-bold">time</span></div>
+        <div class="opacity-80">Hong Kong local time (Asia/Hong_Kong), epoch timestamp, day of week.</div>
+
+        <div><span class="text-yellow-300 font-bold">holiday</span> or <span class="text-yellow-300 font-bold">h</span> or <span class="text-yellow-300 font-bold">vac</span></div>
+        <div class="opacity-80">Hong Kong public holidays & countdown to next upcoming holiday.</div>
+
+        <div><span class="text-yellow-300 font-bold">clear</span> or <span class="text-yellow-300 font-bold">cls</span></div>
+        <div class="opacity-80">Clear terminal screen output.</div>
+
+        <div><span class="text-yellow-300 font-bold">banner</span></div>
+        <div class="opacity-80">Redisplay retro HKO CLI header ASCII banner.</div>
+
+        <div><span class="text-yellow-300 font-bold">theme:[matrix|amber|cyberpunk|dark]</span></div>
+        <div class="opacity-80">Switch color theme (e.g., <code class="bg-black/60 px-1 rounded">theme:amber</code>).</div>
+    </div>
+</div>
+            `);
+        }
+
+        // --- Command: WEATHER (rhrread API) ---
+        async function fetchRealtimeWeather() {
+            appendOutput(`<div id="loading-weather" class="text-xs opacity-75 animate-pulse">[FETCHING] Requesting real-time weather data from HKO API...</div>`);
+            
+            try {
+                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
+                const data = await res.json();
+
+                // Remove loading prompt
+                const loader = document.getElementById('loading-weather');
+                if (loader) loader.remove();
+
+                const updateTime = data.updateTime ? data.updateTime.substring(11, 16) : 'Current';
+                
+                // Observatory Temperature
+                let hkoTemp = 'N/A';
+                if (data.temperature && data.temperature.data) {
+                    const hkoObj = data.temperature.data.find(d => d.place === '香港天文台') || data.temperature.data[0];
+                    if (hkoObj) hkoTemp = `${hkoObj.value}°C`;
+                }
+
+                // Humidity
+                let humidity = 'N/A';
+                if (data.humidity && data.humidity.data && data.humidity.data[0]) {
+                    humidity = `${data.humidity.data[0].value}%`;
+                }
+
+                // UV Index
+                let uvText = 'N/A';
+                if (data.uvindex && data.uvindex.data && data.uvindex.data[0]) {
+                    uvText = `${data.uvindex.data[0].value} (${data.uvindex.data[0].desc || 'Normal'})`;
+                }
+
+                // Warning summary embedded in weather payload
+                let warningMsg = '';
+                if (data.warningMessage && data.warningMessage.length > 0) {
+                    warningMsg = `<div class="p-2 border border-red-500/50 bg-red-950/20 text-red-400 rounded text-xs font-bold">⚠ WARNING: ${data.warningMessage.join(' | ')}</div>`;
+                }
+
+                // District Temps Grid
+                let districtGridHtml = '';
+                if (data.temperature && data.temperature.data) {
+                    districtGridHtml = data.temperature.data.slice(0, 12).map(item => `
+                        <div class="bg-dim p-1.5 rounded border border-theme/20 flex justify-between items-center text-xs">
+                            <span class="opacity-80">${item.place}</span>
+                            <span class="text-accent font-bold">${item.value}°C</span>
+                        </div>
+                    `).join('');
+                }
+
+                appendOutput(`
+<div class="border border-theme/40 rounded p-4 bg-black/40 space-y-3">
+    <div class="flex justify-between items-center border-b border-theme/30 pb-2">
+        <div class="font-bold text-accent text-base">HONG KONG REAL-TIME WEATHER</div>
+        <div class="text-xs opacity-75">Updated: ${updateTime} HKT</div>
+    </div>
+
+    ${warningMsg}
+
+    <div class="grid grid-cols-3 gap-2 text-center my-2">
+        <div class="bg-dim p-2 rounded border border-theme/30">
+            <div class="text-[10px] opacity-70">HKO TEMP</div>
+            <div class="text-xl md:text-2xl font-bold text-yellow-300">${hkoTemp}</div>
+        </div>
+        <div class="bg-dim p-2 rounded border border-theme/30">
+            <div class="text-[10px] opacity-70">HUMIDITY</div>
+            <div class="text-xl md:text-2xl font-bold text-cyan-300">${humidity}</div>
+        </div>
+        <div class="bg-dim p-2 rounded border border-theme/30">
+            <div class="text-[10px] opacity-70">UV INDEX</div>
+            <div class="text-xl md:text-2xl font-bold text-emerald-300">${uvText}</div>
+        </div>
+    </div>
+
+    <div>
+        <div class="text-xs font-bold text-accent mb-1 opacity-90">DISTRICT TEMPERATURE BREAKDOWN (°C):</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            ${districtGridHtml}
+        </div>
+    </div>
+</div>
+                `);
+
+            } catch (err) {
+                const loader = document.getElementById('loading-weather');
+                if (loader) loader.remove();
+                appendOutput(`<div class="text-red-400 text-xs">[ERROR] Failed to connect to HKO API: ${err.message}</div>`);
+            }
+        }
+
+        // --- Command: WARNING (warnsum & warningInfo API) ---
+        async function fetchWeatherWarnings() {
+            appendOutput(`<div id="loading-warn" class="text-xs opacity-75 animate-pulse">[FETCHING] Checking active weather warning signals...</div>`);
+
+            try {
+                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=warnsum&lang=tc');
+                const data = await res.json();
+
+                const loader = document.getElementById('loading-warn');
+                if (loader) loader.remove();
+
+                const keys = Object.keys(data);
+                if (keys.length === 0) {
+                    appendOutput(`
+                        <div class="border border-green-500/30 bg-green-950/20 text-green-400 p-3 rounded text-xs flex items-center space-x-2">
+                            <span>✔</span>
+                            <span>NO ACTIVE WEATHER WARNINGS in Hong Kong at this time. All clear.</span>
+                        </div>
+                    `);
+                    return;
+                }
+
+                let warningItemsHtml = '';
+                for (const key of keys) {
+                    const item = data[key];
+                    const name = item.name || key;
+                    const action = item.actionCode || 'ISSUE';
+                    const issueTime = item.issueTime ? item.issueTime.substring(11, 16) : '';
+
+                    warningItemsHtml += `
+                        <div class="border border-red-500/50 bg-red-950/30 p-3 rounded flex justify-between items-center">
+                            <div>
+                                <span class="badge bg-red-600 text-white mr-2">ACTIVE</span>
+                                <span class="font-bold text-yellow-300">${name}</span>
+                            </div>
+                            <div class="text-xs opacity-75">Issued: ${issueTime} HKT</div>
+                        </div>
+                    `;
+                }
+
+                appendOutput(`
+<div class="border border-theme/40 rounded p-4 bg-black/40 space-y-3">
+    <div class="font-bold text-red-400 text-base border-b border-theme/30 pb-2 flex items-center justify-between">
+        <span>⚠ HKO ACTIVE WEATHER WARNING SIGNALS</span>
+        <span class="text-xs px-2 py-0.5 bg-red-600 text-white rounded font-normal">LIVE</span>
+    </div>
+    <div class="space-y-2">
+        ${warningItemsHtml}
+    </div>
+</div>
+                `);
+
+            } catch (err) {
+                const loader = document.getElementById('loading-warn');
+                if (loader) loader.remove();
+                appendOutput(`<div class="text-red-400 text-xs">[ERROR] Unable to fetch warnings data: ${err.message}</div>`);
+            }
+        }
+
+        // --- Command: FORECAST (fnd API) ---
+        async function fetchForecast() {
+            appendOutput(`<div id="loading-forecast" class="text-xs opacity-75 animate-pulse">[FETCHING] Loading 9-Day HKO Weather Forecast...</div>`);
+
+            try {
+                const res = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
+                const data = await res.json();
+
+                const loader = document.getElementById('loading-forecast');
+                if (loader) loader.remove();
+
+                const generalForecast = data.generalSituation || '';
+                const forecastList = data.weatherForecast || [];
+
+                let listHtml = forecastList.map(item => {
+                    const dateStr = `${item.forecastDate.substring(4, 6)}/${item.forecastDate.substring(6, 8)}`;
+                    const week = item.week || '';
+                    const minT = item.forecastMintemp.value;
+                    const maxT = item.forecastMaxtemp.value;
+                    const psr = item.PSR || 'N/A';
+                    const weatherDesc = item.forecastWeather || '';
+
+                    // Simple visual ASCII temperature bar
+                    const barLen = Math.max(2, Math.min(10, Math.round((maxT - minT))));
+                    const bar = '■'.repeat(barLen) + '□'.repeat(10 - barLen);
+
+                    return `
+                        <div class="border border-theme/20 bg-dim p-2.5 rounded text-xs grid grid-cols-1 md:grid-cols-12 gap-2 items-center hover:bg-white/5 transition">
+                            <div class="md:col-span-2 font-bold text-yellow-300">${dateStr} (${week})</div>
+                            <div class="md:col-span-3 text-emerald-300 font-mono">
+                                ${minT}°C [${bar}] ${maxT}°C
+                            </div>
+                            <div class="md:col-span-2 text-cyan-300">PSR: ${psr}</div>
+                            <div class="md:col-span-5 opacity-85 truncate" title="${weatherDesc}">${weatherDesc}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                appendOutput(`
+<div class="border border-theme/40 rounded p-4 bg-black/40 space-y-3">
+    <div class="font-bold text-accent text-base border-b border-theme/30 pb-2">9-DAY HONG KONG WEATHER FORECAST</div>
+    
+    <div class="text-xs opacity-80 border-l-2 border-accent pl-2 py-1 italic bg-white/5 rounded">
+        "${generalForecast}"
+    </div>
+
+    <div class="space-y-1.5 pt-2">
+        ${listHtml}
+    </div>
+</div>
+                `);
+
+            } catch (err) {
+                const loader = document.getElementById('loading-forecast');
+                if (loader) loader.remove();
+                appendOutput(`<div class="text-red-400 text-xs">[ERROR] Failed to load forecast API: ${err.message}</div>`);
+            }
+        }
+
+        // --- Command: DATE / TIME ---
+        function renderHKTime() {
+            const now = new Date();
+            
+            const hktFormatted = new Intl.DateTimeFormat('zh-HK', {
+                timeZone: 'Asia/Hong_Kong',
+                dateStyle: 'full',
+                timeStyle: 'medium'
+            }).format(now);
+
+            const utcString = now.toUTCString();
+            const timestamp = Math.floor(now.getTime() / 1000);
+
+            appendOutput(`
+<div class="border border-theme/40 rounded p-4 bg-black/40 space-y-2 text-xs">
+    <div class="font-bold text-accent text-sm border-b border-theme/30 pb-1">HONG KONG STANDARD TIME (HKT)</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+        <div><span class="opacity-70">Local HKT Time:</span> <span class="font-bold text-yellow-300 text-sm">${hktFormatted}</span></div>
+        <div><span class="opacity-70">Time Zone:</span> <span class="text-cyan-300">Asia/Hong_Kong (UTC+08:00)</span></div>
+        <div><span class="opacity-70">UNIX Epoch Timestamp:</span> <span class="font-mono text-emerald-300">${timestamp}</span></div>
+        <div><span class="opacity-70">UTC Time:</span> <span class="font-mono opacity-80">${utcString}</span></div>
+    </div>
+</div>
+            `);
+        }
+
+        // --- Command: HOLIDAY (Public Holidays) ---
+        async function fetchPublicHolidays() {
+            appendOutput(`<div id="loading-holiday" class="text-xs opacity-75 animate-pulse">[FETCHING] Calculating Hong Kong Public Holidays calendar...</div>`);
+
+            // Use Fallback Data directly for high reliability and instantaneous output
+            setTimeout(() => {
+                const loader = document.getElementById('loading-holiday');
+                if (loader) loader.remove();
+
+                const today = new Date().toISOString().split('T')[0];
+                const upcoming = HK_PUBLIC_HOLIDAYS_FALLBACK.filter(h => h.date >= today);
+                
+                let nextHolidayHtml = '';
+                if (upcoming.length > 0) {
+                    const next = upcoming[0];
+                    const diffDays = Math.ceil((new Date(next.date) - new Date(today)) / (1000 * 60 * 60 * 24));
+                    
+                    nextHolidayHtml = `
+                        <div class="border border-emerald-500/50 bg-emerald-950/20 p-3 rounded mb-3">
+                            <div class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">NEXT UPCOMING PUBLIC HOLIDAY</div>
+                            <div class="text-base font-bold text-yellow-300">${next.name}</div>
+                            <div class="text-xs opacity-80 mt-1">Date: <span class="text-accent">${next.date}</span> (In <span class="font-bold text-emerald-300">${diffDays}</span> days)</div>
+                        </div>
+                    `;
+                }
+
+                const listHtml = upcoming.slice(0, 6).map(h => `
+                    <div class="flex justify-between items-center p-2 bg-dim rounded border border-theme/20 text-xs">
+                        <span class="font-bold text-yellow-300">${h.name}</span>
+                        <span class="font-mono text-cyan-300">${h.date}</span>
+                    </div>
+                `).join('');
+
+                appendOutput(`
+<div class="border border-theme/40 rounded p-4 bg-black/40 space-y-2">
+    <div class="font-bold text-accent text-base border-b border-theme/30 pb-2">HONG KONG PUBLIC HOLIDAYS</div>
+    ${nextHolidayHtml}
+    <div class="text-xs font-bold opacity-80 pt-1">UPCOMING HOLIDAYS LIST:</div>
+    <div class="space-y-1.5">
+        ${listHtml}
+    </div>
+</div>
+                `);
+            }, 300);
+        }
+    </script>
+</body>
+</html>
