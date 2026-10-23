@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python IDLE - WebAssembly 交互式 Python 教学平台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CodeMirror Editor Styling & Scripts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <!-- Pyodide Engine CDN -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+
+    <style>
+        /* Classic Python IDLE Theme Styles */
+        :root {
+            --idle-bg: #e5e7eb;
+            --idle-window-bg: #f3f4f6;
+            --idle-header-bg: linear-gradient(180deg, #000080 0%, #000066 100%);
+            --idle-header-text: #ffffff;
+            --idle-border: #9ca3af;
+            --idle-menu-bg: #f0f0f0;
+            --idle-editor-bg: #ffffff;
+            --idle-editor-fg: #000000;
+            --idle-shell-bg: #ffffff;
+            --idle-shell-prompt: #700000;
+            --idle-shell-stdout: #000000;
+            --idle-shell-stderr: #dd0000;
+            --idle-accent: #000080;
+        }
+
+        .dark-theme {
+            --idle-bg: #0f172a;
+            --idle-window-bg: #1e293b;
+            --idle-header-bg: linear-gradient(180deg, #312e81 0%, #1e1b4b 100%);
+            --idle-header-text: #e2e8f0;
+            --idle-border: #334155;
+            --idle-menu-bg: #1e293b;
+            --idle-editor-bg: #0f172a;
+            --idle-editor-fg: #f8fafc;
+            --idle-shell-bg: #0f172a;
+            --idle-shell-prompt: #f43f5e;
+            --idle-shell-stdout: #e2e8f0;
+            --idle-shell-stderr: #fb7185;
+            --idle-accent: #6366f1;
+        }
+
+        body {
+            background-color: var(--idle-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* IDLE Window Frame Effect */
+        .idle-window {
+            background-color: var(--idle-window-bg);
+            border: 1px solid var(--idle-border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 6px;
+        }
+
+        .idle-titlebar {
+            background: var(--idle-header-bg);
+            color: var(--idle-header-text);
+            font-weight: bold;
+            font-size: 0.85rem;
+            padding: 4px 10px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Custom CodeMirror Styling for Python IDLE */
+        .CodeMirror {
+            font-family: "Consolas", "Courier New", Courier, monospace !important;
+            font-size: 14px;
+            height: 100% !important;
+            background-color: var(--idle-editor-bg) !important;
+            color: var(--idle-editor-fg) !important;
+            border-radius: 0 0 6px 6px;
+        }
+
+        /* Syntax colors resembling classic Python IDLE light mode */
+        body:not(.dark-theme) .cm-keyword { color: #ff7700 !important; font-weight: bold; }
+        body:not(.dark-theme) .cm-string { color: #00aa00 !important; }
+        body:not(.dark-theme) .cm-comment { color: #dd0000 !important; font-style: italic; }
+        body:not(.dark-theme) .cm-builtin { color: #900090 !important; font-weight: bold; }
+        body:not(.dark-theme) .cm-number { color: #000000 !important; }
+        body:not(.dark-theme) .cm-def { color: #0000ff !important; font-weight: bold; }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100,100,100,0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100,100,100,0.5);
+        }
+
+        /* Shell Console Output */
+        .shell-output {
+            font-family: "Consolas", "Courier New", Courier, monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .shell-stdout { color: var(--idle-shell-stdout); }
+        .shell-stderr { color: var(--idle-shell-stderr); font-weight: 500; }
+        .shell-prompt { color: var(--idle-shell-prompt); font-weight: bold; }
+    </style>
+</head>
+<body class="h-screen flex flex-col text-gray-800">
+
+    <!-- ==================== TOP NAVIGATION / IDLE MENU BAR ==================== -->
+    <header class="bg-gray-200 dark:bg-gray-800 border-b border-gray-400 dark:border-gray-700 select-none flex-none">
+        <!-- Top App Title & Window Buttons -->
+        <div class="idle-titlebar">
+            <div class="flex items-center gap-2">
+                <i class="fa-brands fa-python text-yellow-400 text-lg"></i>
+                <span>Python 3.11.0 IDLE - WebAssembly 交互式学习平台 (NumPy & Matplotlib)</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+                <span id="pyodide-status" class="bg-yellow-500 text-black px-2 py-0.5 rounded font-mono font-semibold animate-pulse">
+                    <i class="fa-solid fa-spinner fa-spin mr-1"></i>正在加载 Pyodide 引擎...
+                </span>
+                <button onclick="toggleTheme()" class="hover:bg-white/20 px-2 py-0.5 rounded text-white text-xs transition">
+                    <i class="fa-solid fa-circle-half-stroke mr-1"></i><span id="theme-btn-text">暗黑模式</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Bar Items -->
+        <div class="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-800 text-gray-700 dark:text-gray-300">
+            <!-- Run Module Button -->
+            <button onclick="runPythonScript()" class="flex items-center gap-1.5 px-3 py-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-sm transition">
+                <i class="fa-solid fa-play"></i>
+                <span>运行程序 (Run Module - F5)</span>
+            </button>
+
+            <!-- Load Sample Code -->
+            <button onclick="loadCurrentLessonCode()" class="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm transition ml-2">
+                <i class="fa-solid fa-code"></i>
+                <span>载入本课示例代码</span>
+            </button>
+
+            <!-- Solution Check -->
+            <button onclick="verifyLessonSolution()" class="flex items-center gap-1.5 px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded shadow-sm transition">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>校验代码作业</span>
+            </button>
+
+            <!-- Reset Code -->
+            <button onclick="resetEditorCode()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300">
+                <i class="fa-solid fa-rotate-left"></i> 重置代码
+            </button>
+
+            <!-- Clear Console -->
+            <button onclick="clearShellConsole()" class="flex items-center gap-1 px-2 py-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300">
+                <i class="fa-solid fa-eraser"></i> 清空 Shell
+            </button>
+
+            <div class="ml-auto flex items-center gap-2 text-gray-500 text-xs pr-2">
+                <span class="hidden md:inline"><i class="fa-solid fa-keyboard mr-1"></i>快捷键: <kbd class="px-1 bg-gray-200 dark:bg-gray-700 rounded border border-gray-400">F5</kbd> 运行</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN THREE-COLUMN WORKSPACE ==================== -->
+    <main class="flex-1 flex flex-col md:flex-row p-2 gap-2 overflow-hidden bg-gray-300 dark:bg-gray-950">
+        
+        <!-- LEFT PANEL: LESSON CURRICULUM & INSTRUCTIONS -->
+        <section class="w-full md:w-80 flex flex-col idle-window overflow-hidden flex-none">
+            <!-- Lesson Header -->
+            <div class="idle-titlebar">
+                <span><i class="fa-solid fa-book-open mr-1.5"></i>课程指南 & 任务划分</span>
+                <span id="lesson-progress-badge" class="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded">课程 1/5</span>
+            </div>
+
+            <div class="p-3 bg-gray-100 dark:bg-gray-900 border-b border-gray-300 dark:border-gray-800">
+                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">选择学习章节:</label>
+                <select id="lesson-select" onchange="switchLesson(this.value)" class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-100">
+                    <option value="0">1. NumPy 基础：数组创建与切片</option>
+                    <option value="1">2. NumPy 矩阵重构与统计计算</option>
+                    <option value="2">3. Matplotlib 基础折线图与样式</option>
+                    <option value="3">4. 数据散点图与频率直方图</option>
+                    <option value="4">5. 综合实战：多子图布局与热力图</option>
+                </select>
+            </div>
+
+            <!-- Lesson Details & Objectives Container -->
+            <div class="flex-1 overflow-y-auto p-3 text-xs space-y-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+                <div>
+                    <h3 id="lesson-title" class="text-sm font-bold text-blue-700 dark:text-blue-400 border-b pb-1 mb-1 border-gray-200 dark:border-gray-800">
+                        <!-- Dynamic Title -->
+                    </h3>
+                    <p id="lesson-desc" class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        <!-- Dynamic Description -->
+                    </p>
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded border border-blue-200 dark:border-blue-900">
+                    <h4 class="font-bold text-blue-900 dark:text-blue-300 mb-1 flex items-center gap-1">
+                        <i class="fa-solid fa-list-check"></i> 学习目标与实践任务：
+                    </h4>
+                    <ul id="lesson-objectives" class="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
+                        <!-- Dynamic Objectives -->
+                    </ul>
+                </div>
+
+                <div class="bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-300">
+                    <h4 class="font-bold mb-1 flex items-center gap-1">
+                        <i class="fa-solid fa-lightbulb"></i> 提示与操作诀窍：
+                    </h4>
+                    <p id="lesson-tips" class="leading-relaxed">
+                        <!-- Dynamic Tips -->
+                    </p>
+                </div>
+
+                <!-- Solution Verification Result Banner -->
+                <div id="solution-banner" class="hidden p-3 rounded text-xs font-semibold transition-all">
+                    <!-- Status message will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER PANEL: PYTHON IDLE SCRIPT EDITOR -->
+        <section class="flex-1 flex flex-col idle-window min-w-0">
+            <div class="idle-titlebar">
+                <div class="flex items-center gap-2">
+                    <i class="fa-regular fa-file-code"></i>
+                    <span id="editor-filename">script_module.py - IDLE Editor</span>
+                </div>
+                <div class="text-[11px] opacity-80">
+                    <span>Python 语法高亮 | 自动 4 空格缩进</span>
+                </div>
+            </div>
+
+            <!-- CodeMirror Target Container -->
+            <div class="flex-1 relative overflow-hidden bg-white dark:bg-gray-900">
+                <textarea id="python-editor"></textarea>
+            </div>
+
+            <!-- Editor Bottom Status Bar -->
+            <div class="px-3 py-1 bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 text-[11px] text-gray-600 dark:text-gray-400 flex justify-between items-center">
+                <span id="editor-cursor-pos">行 1, 列 1</span>
+                <span>按 <kbd class="px-1 bg-gray-200 dark:bg-gray-700 rounded border border-gray-400">F5</kbd> 直接运行当前文件</span>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: IDLE SHELL CONSOLE & MATPLOTLIB FIGURE VIEWER -->
+        <section class="w-full md:w-96 flex flex-col gap-2 flex-none">
+            
+            <!-- RIGHT TOP: PYTHON IDLE REPL SHELL -->
+            <div class="h-1/2 flex flex-col idle-window overflow-hidden">
+                <div class="idle-titlebar">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-green-400"></i>
+                        <span>Python 3.11 Shell (交互式终端)</span>
+                    </div>
+                    <button onclick="clearShellConsole()" title="清空 Console" class="hover:bg-white/20 px-1.5 py-0.5 rounded text-xs">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+
+                <div id="shell-container" class="flex-1 p-2 overflow-y-auto bg-white dark:bg-gray-950 font-mono text-xs shell-output border-b border-gray-300 dark:border-gray-800">
+                    <div class="text-blue-800 dark:text-blue-400 font-bold mb-1">
+                        Python 3.11.0 (main, WebAssembly Pyodide v0.26.2)<br>
+                        Type "help", "copyright", "credits" or "license" for more information.
+                    </div>
+                    <div id="shell-logs"></div>
+                </div>
+
+                <!-- Interactive Shell Input Prompt -->
+                <div class="flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-900 font-mono text-xs border-t border-gray-200 dark:border-gray-800">
+                    <span class="shell-prompt mr-1 select-none">&gt;&gt;&gt;</span>
+                    <input type="text" id="shell-input" onkeydown="handleShellInput(event)" placeholder="在此输入单行 Python 指令按 Enter 执行..." class="flex-1 bg-transparent focus:outline-none text-gray-800 dark:text-gray-100">
+                </div>
+            </div>
+
+            <!-- RIGHT BOTTOM: MATPLOTLIB FIGURE VIEWER -->
+            <div class="h-1/2 flex flex-col idle-window overflow-hidden">
+                <div class="idle-titlebar">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-chart-line fa-solid text-amber-300"></i>
+                        <span>Matplotlib 图表渲染面板 (Plots)</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-xs">
+                        <button onclick="downloadCurrentPlot()" title="下载当前图像" class="hover:bg-white/20 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                        <button onclick="clearPlots()" title="清空图表历史" class="hover:bg-white/20 px-1.5 py-0.5 rounded">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="plot-container" class="flex-1 p-2 bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center overflow-auto relative">
+                    <!-- Placeholder when no plot is generated -->
+                    <div id="plot-empty-state" class="text-center text-gray-400 dark:text-gray-600 p-4">
+                        <i class="fa-solid fa-chart-pie text-4xl mb-2 opacity-50"></i>
+                        <p class="text-xs">暂无生成的图形。<br>在代码中调用 <code class="bg-gray-200 dark:bg-gray-800 px-1 rounded">plt.show()</code> 即可在此实时显示！</p>
+                    </div>
+                    <!-- Dynamically rendered images go here -->
+                    <div id="plot-gallery" class="w-full h-full flex flex-col items-center gap-3"></div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- ==================== MODAL: FULLSCREEN IMAGE ZOOM ==================== -->
+    <div id="image-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex flex-col items-center justify-center p-4">
+        <div class="relative bg-white dark:bg-gray-900 p-2 rounded-lg max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <button onclick="closePlotModal()" class="absolute -top-3 -right-3 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold shadow-lg hover:bg-red-700">
+                &times;
+            </button>
+            <img id="modal-plot-img" src="" class="max-w-full max-h-[80vh] object-contain rounded border border-gray-300 dark:border-gray-700">
+            <div class="mt-2 flex gap-3">
+                <a id="modal-download-btn" href="" download="matplotlib_figure.png" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition">
+                    <i class="fa-solid fa-download mr-1"></i>下载高清 PNG
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ENGINE & LOGIC ==================== -->
+    <script>
+        // Global App State
+        let pyodide = null;
+        let pyodideReady = false;
+        let editor = null;
+        let currentLessonIndex = 0;
+        let shellHistory = [];
+        let shellHistoryIdx = -1;
+        let activePlots = [];
+
+        // Curriculum Curriculum Lessons Data
+        const lessons = [
+            {
+                title: "Lesson 1: NumPy 基础 (数组创建与切片)",
+                desc: "NumPy 是 Python 科学计算的核心库。它提供了高效的多维数组对象 <code>ndarray</code> 以及极其快速的数组运算操作。",
+                objectives: [
+                    "使用 <code>np.arange(1, 13)</code> 创建包含 1 到 12 的一维数组 <code>arr</code>",
+                    "使用切片获取前 5 个元素 <code>sub_arr</code> 并打印",
+                    "使用 <code>np.linspace(0, 1, 10)</code> 创建等间隔数组 <code>arr_linspace</code>"
+                ],
+                tips: "NumPy 切片 <code>arr[:5]</code> 包含索引 0 到 4 的数据，左闭右开。`np.linspace` 可生成指定范围内的平滑分布点。",
+                initialCode: `# Lesson 1: NumPy 基础 - 数组创建与切片
+import numpy as np
+
+# 1. 创建 1 到 12 的一维数组
+arr = np.arange(1, 13)
+print("完整数组 arr:", arr)
+
+# 2. 切片获取前 5 个元素
+sub_arr = arr[:5]
+print("前 5 个元素 sub_arr:", sub_arr)
+
+# 3. 使用 linspace 生成 0 到 1 之间的 10 个等间隔数据
+arr_linspace = np.linspace(0, 1, 10)
+print("0到1等间距10个数:\n", arr_linspace)
+`,
+                verifyFunc: async () => {
+                    const checkPy = `
+import sys, numpy as np
+main = sys.modules['__main__']
+assert hasattr(main, 'arr'), "未定义变量 arr"
+assert hasattr(main, 'sub_arr'), "未定义变量 sub_arr"
+assert hasattr(main, 'arr_linspace'), "未定义变量 arr_linspace"
+assert np.array_equal(main.arr, np.arange(1, 13)), "arr 的值不正确，应为 1 到 12"
+assert np.array_equal(main.sub_arr, np.arange(1, 6)), "sub_arr 应为前 5 个元素"
+assert len(main.arr_linspace) == 10, "arr_linspace 长度应为 10"
+'SUCCESS'
+`;
+                    try {
+                        let res = await pyodide.runPythonAsync(checkPy);
+                        return { success: true, msg: "🎉 太棒了！Lesson 1 目标已全部达成！成功掌握 NumPy 数组创建与切片。" };
+                    } catch (e) {
+                        return { success: false, msg: "❌ 校验失败: " + e.message };
+                    }
+                }
+            },
+            {
+                title: "Lesson 2: NumPy 矩阵与统计计算",
+                desc: "掌握高维数组的形状重构 (Reshape) 以及常用统计计算函数（均值、求和、广播机制 Broadcasting）。",
+                objectives: [
+                    "将 1~12 的一维数组重构为 3x4 矩阵 <code>matrix</code>",
+                    "计算矩阵所有元素的全局均值 <code>m_mean</code>",
+                    "计算矩阵按列求和的结果 <code>m_sum_col</code> (axis=0)",
+                    "将矩阵乘以 2 得到 <code>matrix_double</code>"
+                ],
+                tips: "<code>reshape(行, 列)</code> 改变形状时总元素数必须保持一致。<code>axis=0</code> 表示跨行按列压缩计算。",
+                initialCode: `# Lesson 2: NumPy 矩阵与统计
+import numpy as np
+
+# 1. 创建 1~12 数组并重构为 3x4 矩阵
+arr = np.arange(1, 13)
+matrix = arr.reshape(3, 4)
+print("3x4 矩阵:\n", matrix)
+
+# 2. 统计计算
+m_mean = np.mean(matrix)
+m_sum_col = np.sum(matrix, axis=0)
+
+print("\n矩阵全局均值 m_mean:", m_mean)
+print("按列求和 m_sum_col:", m_sum_col)
+
+# 3. 广播运算
+matrix_double = matrix * 2
+print("\n矩阵乘以 2 结果:\n", matrix_double)
+`,
+                verifyFunc: async () => {
+                    const checkPy = `
+import sys, numpy as np
+main = sys.modules['__main__']
+assert hasattr(main, 'matrix'), "未定义变量 matrix"
+assert main.matrix.shape == (3, 4), "matrix 的形状应为 (3, 4)"
+assert hasattr(main, 'm_mean'), "未定义变量 m_mean"
+assert hasattr(main, 'm_sum_col'), "未定义变量 m_sum_col"
+assert main.m_mean == np.mean(main.matrix), "m_mean 计算不准确"
+'SUCCESS'
+`;
+                    try {
+                        let res = await pyodide.runPythonAsync(checkPy);
+                        return { success: true, msg: "🎉 优秀！Lesson 2 校验通过！已学会矩阵 Reshape 与统计分析。" };
+                    } catch (e) {
+                        return { success: false, msg: "❌ 校验失败: " + e.message };
+                    }
+                }
+            },
+            {
+                title: "Lesson 3: Matplotlib 基础折线图",
+                desc: "Matplotlib 是 Python 最强大的数据可视化工具。学习绘制基础折线图、自定义线条颜色、样式、网格和图例。",
+                objectives: [
+                    "计算正弦波 <code>y1 = np.sin(x)</code> 和余弦波 <code>y2 = np.cos(x)</code>",
+                    "使用 <code>plt.plot()</code> 绘制两条折线图",
+                    "设置标题 <code>Sine & Cosine Waves</code>、标签与图例 <code>plt.legend()</code>",
+                    "调用 <code>plt.show()</code> 展示图形"
+                ],
+                tips: "别忘了调用 <code>plt.show()</code>，系统会自动捕获图像并在右下角 Matplotlib 面板呈现！",
+                initialCode: `# Lesson 3: Matplotlib 折线图
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. 准备数据
+x = np.linspace(0, 2 * np.pi, 50)
+y1 = np.sin(x)
+y2 = np.cos(x)
+
+# 2. 创建图表
+plt.figure(figsize=(7, 4))
+plt.plot(x, y1, color='blue', linestyle='-', linewidth=2, label='Sin(x)')
+plt.plot(x, y2, color='red', linestyle='--', linewidth=2, label='Cos(x)')
+
+# 3. 修饰图表
+plt.title('Sine & Cosine Waves', fontsize=12, fontweight='bold')
+plt.xlabel('X (Radians)')
+plt.ylabel('Y Value')
+plt.grid(True, linestyle=':', alpha=0.7)
+plt.legend(loc='upper right')
+
+# 4. 显示图表
+plt.show()
+`,
+                verifyFunc: async () => {
+                    if (activePlots.length === 0) {
+                        return { success: false, msg: "❌ 尚未生成图表，请点击【运行程序 (F5)】生成并展示 Matplotlib 图表！" };
+                    }
+                    return { success: true, msg: "🎉 完美！成功生成并渲染了折线图！" };
+                }
+            },
+            {
+                title: "Lesson 4: 数据散点图与直方图",
+                desc: "散点图 (Scatter Plot) 用于观察多维变量的相关性，直方图 (Histogram) 用于观察连续数据的概率分布。",
+                objectives: [
+                    "生成 300 个正态分布随机数 <code>x</code> 和 <code>y</code>",
+                    "子图 1: 使用 <code>plt.scatter()</code> 绘制渐变色散点图",
+                    "子图 2: 使用 <code>plt.hist()</code> 绘制正态分布频率直方图"
+                ],
+                tips: "<code>plt.subplot(1, 2, 1)</code> 可以将画布分割为 1 行 2 列，并在第 1 个子图区绘图。",
+                initialCode: `# Lesson 4: 散点图与直方图
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(42)
+
+# 生成正态分布数据
+x = np.random.randn(300)
+y = np.random.randn(300)
+
+plt.figure(figsize=(8, 3.8))
+
+# 子图 1: 散点图
+plt.subplot(1, 2, 1)
+colors = np.sqrt(x**2 + y**2) # 与原点距离映射颜色
+plt.scatter(x, y, c=colors, cmap='viridis', alpha=0.7)
+plt.colorbar(label='Distance')
+plt.title('Scatter Plot')
+plt.xlabel('X')
+plt.ylabel('Y')
+
+# 子图 2: 直方图
+plt.subplot(1, 2, 2)
+plt.hist(x, bins=20, color='skyblue', edgecolor='black', alpha=0.8)
+plt.title('Distribution Histogram')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+
+plt.tight_layout()
+plt.show()
+`,
+                verifyFunc: async () => {
+                    if (activePlots.length === 0) {
+                        return { success: false, msg: "❌ 尚未生成图表，请点击【运行程序 (F5)】运行代码！" };
+                    }
+                    return { success: true, msg: "🎉 漂亮！成功掌握双子图布局与数据分布可视化！" };
+                }
+            },
+            {
+                title: "Lesson 5: 综合实战 - 多子图与热力图",
+                desc: "综合运用 NumPy 与 Matplotlib 绘制包含增长趋势图、柱状图 (Bar Chart) 和矩阵热力图 (Heatmap) 的多面板分析看板。",
+                objectives: [
+                    "创建 2x2 网格面板布局 <code>plt.subplots(2, 2)</code>",
+                    "绘制 Category 柱状图 <code>bar()</code>",
+                    "绘制矩阵热力图 <code>imshow()</code>",
+                    "应用 <code>plt.tight_layout()</code> 自动微调边距"
+                ],
+                tips: "<code>imshow()</code> 可以直接将二维 NumPy 矩阵转换为色彩丰富的热力图，常用于相关系数分析。",
+                initialCode: `# Lesson 5: 综合实战 - 多子图与热力图
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(10)
+
+fig, axs = plt.subplots(2, 2, figsize=(8, 5.5))
+
+# 1. 折线趋势图
+x = np.arange(1, 11)
+axs[0, 0].plot(x, x**1.5, 'o-', color='#3498db')
+axs[0, 0].set_title('Growth Trend')
+axs[0, 0].grid(True, alpha=0.3)
+
+# 2. 柱状图
+categories = ['A', 'B', 'C', 'D', 'E']
+values = [23, 45, 56, 78, 32]
+axs[0, 1].bar(categories, values, color=['#e74c3c', '#2ecc71', '#9b59b6', '#f1c40f', '#e67e22'])
+axs[0, 1].set_title('Category Sales')
+
+# 3. 散点分布
+sx = np.random.rand(50)
+sy = sx * 2 + np.random.randn(50) * 0.2
+axs[1, 0].scatter(sx, sy, color='#1abc9c', alpha=0.8)
+axs[1, 0].set_title('Scatter Correlation')
+
+# 4. 矩阵热力图 (Heatmap)
+data_matrix = np.random.rand(6, 6)
+im = axs[1, 1].imshow(data_matrix, cmap='magma')
+fig.colorbar(im, ax=axs[1, 1])
+axs[1, 1].set_title('Correlation Heatmap')
+
+plt.tight_layout()
+plt.show()
+`,
+                verifyFunc: async () => {
+                    if (activePlots.length === 0) {
+                        return { success: false, msg: "❌ 尚未生成图表，请运行代码！" };
+                    }
+                    return { success: true, msg: "🏆 恭喜！您已成功通关 NumPy 与 Matplotlib 核心教程！" };
+                }
+            }
+        ];
+
+        // Initialize CodeMirror Editor
+        function initCodeMirror() {
+            const textarea = document.getElementById('python-editor');
+            editor = CodeMirror.fromTextArea(textarea, {
+                mode: 'python',
+                theme: 'default',
+                lineNumbers: true,
+                indentUnit: 4,
+                tabSize: 4,
+                indentWithTabs: false,
+                lineWrapping: true,
+                autoCloseBrackets: true,
+                matchBrackets: true
+            });
+
+            editor.on('cursorActivity', () => {
+                const pos = editor.getCursor();
+                document.getElementById('editor-cursor-pos').innerText = `行 ${pos.line + 1}, 列 ${pos.ch + 1}`;
+            });
+        }
+
+        // Initialize Pyodide WebAssembly Engine
+        async function initPyodideEngine() {
+            const statusBadge = document.getElementById('pyodide-status');
+            try {
+                writeToShellLog("正在加载 WebAssembly Python 运行时...\n", "shell-stdout");
+                pyodide = await loadPyodide({
+                    stdout: (text) => writeToShellLog(text + "\n", "shell-stdout"),
+                    stderr: (text) => writeToShellLog(text + "\n", "shell-stderr")
+                });
+
+                writeToShellLog("正在安装科学计算包: NumPy, Matplotlib...\n", "shell-stdout");
+                await pyodide.loadPackage(["numpy", "matplotlib"]);
+
+                // Configure matplotlib non-interactive Agg backend setup
+                await pyodide.runPythonAsync(`
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io, base64
+print("NumPy & Matplotlib 环境就绪！")
+`);
+
+                pyodideReady = true;
+                statusBadge.className = "bg-green-600 text-white px-2 py-0.5 rounded font-mono font-semibold text-xs";
+                statusBadge.innerHTML = `<i class="fa-solid fa-check mr-1"></i>Pyodide 就绪`;
+                writeToShellLog(">>> 准备就绪，可以运行 Python 代码。\n", "shell-prompt");
+            } catch (err) {
+                console.error("Pyodide Load Error:", err);
+                statusBadge.className = "bg-red-600 text-white px-2 py-0.5 rounded font-mono font-semibold text-xs";
+                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i>加载失败`;
+                writeToShellLog(`\n加载引擎失败: ${err.message}\n`, "shell-stderr");
+            }
+        }
+
+        // Switch Lesson Curriculum
+        function switchLesson(index) {
+            currentLessonIndex = parseInt(index);
+            const lesson = lessons[currentLessonIndex];
+
+            document.getElementById('lesson-title').innerText = lesson.title;
+            document.getElementById('lesson-desc').innerHTML = lesson.desc;
+            document.getElementById('lesson-tips').innerText = lesson.tips;
+            document.getElementById('lesson-progress-badge').innerText = `课程 ${currentLessonIndex + 1}/5`;
+
+            // Render Objectives
+            const objList = document.getElementById('lesson-objectives');
+            objList.innerHTML = lesson.objectives.map(o => `<li>${o}</li>`).join('');
+
+            // Hide banner
+            document.getElementById('solution-banner').classList.add('hidden');
+
+            // Load initial code
+            loadCurrentLessonCode();
+        }
+
+        function loadCurrentLessonCode() {
+            const lesson = lessons[currentLessonIndex];
+            editor.setValue(lesson.initialCode);
+            editor.focus();
+        }
+
+        function resetEditorCode() {
+            loadCurrentLessonCode();
+        }
+
+        // Output formatting to Shell Console
+        function writeToShellLog(text, className = "shell-stdout") {
+            const container = document.getElementById('shell-logs');
+            const span = document.createElement('span');
+            span.className = className;
+            span.innerText = text;
+            container.appendChild(span);
+            
+            const shellScroll = document.getElementById('shell-container');
+            shellScroll.scrollTop = shellScroll.scrollHeight;
+        }
+
+        function clearShellConsole() {
+            document.getElementById('shell-logs').innerHTML = '';
+        }
+
+        // Run Python Script from CodeMirror Editor
+        async function runPythonScript() {
+            if (!pyodideReady) {
+                alert("Pyodide 引擎尚未加载完成，请稍候...");
+                return;
+            }
+
+            const code = editor.getValue();
+            writeToShellLog(`\n======= [ 运行 Module (F5) ] =======\n`, "shell-prompt");
+
+            // Python wrapper code to capture matplotlib figures cleanly
+            const runnerWrapper = `
+import sys, io, base64
+import matplotlib.pyplot as plt
+
+# Clear old figures before run
+plt.close('all')
+
+# Execute user script in main namespace
+_exec_globals = sys.modules['__main__'].__dict__
+
+try:
+    exec(${JSON.stringify(code)}, _exec_globals)
+except Exception as e:
+    import traceback
+    traceback.print_exc()
+
+# Extract generated matplotlib images as base64
+_captured_figs = []
+for _num in plt.get_fignums():
+    _fig = plt.figure(_num)
+    _buf = io.BytesIO()
+    _fig.savefig(_buf, format='png', bbox_inches='tight', dpi=120)
+    _buf.seek(0)
+    _b64 = base64.b64encode(_buf.read()).decode('utf-8')
+    _captured_figs.append(_b64)
+    plt.close(_fig)
+
+_captured_figs
+`;
+
+            try {
+                const resPlots = await pyodide.runPythonAsync(runnerWrapper);
+                if (resPlots && resPlots.length > 0) {
+                    resPlots.forEach(b64Img => addPlotImage(b64Img));
+                }
+            } catch (err) {
+                writeToShellLog(`\n执行异常: ${err.message}\n`, "shell-stderr");
+            }
+        }
+
+        // Shell Single-Line Interactive Input Handle
+        async function handleShellInput(e) {
+            if (e.key === 'Enter') {
+                const inputEl = document.getElementById('shell-input');
+                const command = inputEl.value.trim();
+                if (!command) return;
+
+                // Log command to prompt
+                writeToShellLog(`>>> ${command}\n`, "shell-prompt");
+                shellHistory.push(command);
+                shellHistoryIdx = shellHistory.length;
+                inputEl.value = '';
+
+                if (!pyodideReady) {
+                    writeToShellLog("引擎未准备就绪\n", "shell-stderr");
+                    return;
+                }
+
+                try {
+                    const singleLineWrapper = `
+import sys, io, base64
+import matplotlib.pyplot as plt
+
+_res = eval(${JSON.stringify(command)}, sys.modules['__main__'].__dict__)
+if _res is not None:
+    print(repr(_res))
+
+_captured_figs = []
+for _num in plt.get_fignums():
+    _fig = plt.figure(_num)
+    _buf = io.BytesIO()
+    _fig.savefig(_buf, format='png', bbox_inches='tight', dpi=120)
+    _buf.seek(0)
+    _b64 = base64.b64encode(_buf.read()).decode('utf-8')
+    _captured_figs.append(_b64)
+    plt.close(_fig)
+
+_captured_figs
+`;
+                    const resPlots = await pyodide.runPythonAsync(singleLineWrapper);
+                    if (resPlots && resPlots.length > 0) {
+                        resPlots.forEach(b64Img => addPlotImage(b64Img));
+                    }
+                } catch (err) {
+                    // Try exec if eval fails
+                    try {
+                        await pyodide.runPythonAsync(command);
+                    } catch (execErr) {
+                        writeToShellLog(`${execErr.message}\n`, "shell-stderr");
+                    }
+                }
+            } else if (e.key === 'ArrowUp') {
+                if (shellHistoryIdx > 0) {
+                    shellHistoryIdx--;
+                    document.getElementById('shell-input').value = shellHistory[shellHistoryIdx];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (shellHistoryIdx < shellHistory.length - 1) {
+                    shellHistoryIdx++;
+                    document.getElementById('shell-input').value = shellHistory[shellHistoryIdx];
+                } else {
+                    shellHistoryIdx = shellHistory.length;
+                    document.getElementById('shell-input').value = '';
+                }
+            }
+        }
+
+        // Matplotlib Plots Panel Renderer
+        function addPlotImage(base64Png) {
+            const emptyState = document.getElementById('plot-empty-state');
+            emptyState.classList.add('hidden');
+
+            const gallery = document.getElementById('plot-gallery');
+            const dataUrl = `data:image/png;base64,${base64Png}`;
+            activePlots.push(dataUrl);
+
+            const card = document.createElement('div');
+            card.className = "bg-white dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-700 shadow-sm w-full flex flex-col items-center group relative";
+
+            card.innerHTML = `
+                <img src="${dataUrl}" class="max-h-48 object-contain rounded cursor-pointer transition hover:opacity-95" onclick="openPlotModal('${dataUrl}')">
+                <div class="mt-1 flex items-center justify-between w-full text-[11px] text-gray-500 border-t pt-1 border-gray-200 dark:border-gray-700">
+                    <span>Figure ${activePlots.length}</span>
+                    <div class="flex gap-2">
+                        <button onclick="openPlotModal('${dataUrl}')" class="text-blue-600 hover:underline"><i class="fa-solid fa-magnifying-glass-plus"></i> 放大查看</button>
+                        <a href="${dataUrl}" download="plot_${activePlots.length}.png" class="text-green-600 hover:underline"><i class="fa-solid fa-download"></i> 保存</a>
+                    </div>
+                </div>
+            `;
+
+            gallery.prepend(card);
+        }
+
+        function clearPlots() {
+            activePlots = [];
+            document.getElementById('plot-gallery').innerHTML = '';
+            document.getElementById('plot-empty-state').classList.remove('hidden');
+        }
+
+        function downloadCurrentPlot() {
+            if (activePlots.length === 0) {
+                alert("当前没有可下载的图表");
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = activePlots[activePlots.length - 1];
+            a.download = 'matplotlib_plot.png';
+            a.click();
+        }
+
+        // Modal Controls
+        function openPlotModal(url) {
+            document.getElementById('modal-plot-img').src = url;
+            document.getElementById('modal-download-btn').href = url;
+            document.getElementById('image-modal').classList.remove('hidden');
+        }
+
+        function closePlotModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+        }
+
+        // Solution Verification Logic
+        async function verifyLessonSolution() {
+            if (!pyodideReady) {
+                alert("Pyodide 引擎加载中，请稍候...");
+                return;
+            }
+
+            const banner = document.getElementById('solution-banner');
+            banner.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            banner.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i>正在运行代码作业校验...`;
+            banner.className = "p-3 rounded text-xs font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200";
+
+            // Run user script first
+            await runPythonScript();
+
+            const currentLesson = lessons[currentLessonIndex];
+            const result = await currentLesson.verifyFunc();
+
+            if (result.success) {
+                banner.className = "p-3 rounded text-xs font-semibold bg-green-100 border border-green-300 text-green-900 dark:bg-green-950 dark:border-green-800 dark:text-green-200";
+                banner.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5 text-base"></i>${result.msg}`;
+            } else {
+                banner.className = "p-3 rounded text-xs font-semibold bg-red-100 border border-red-300 text-red-900 dark:bg-red-950 dark:border-red-800 dark:text-red-200";
+                banner.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1.5 text-base"></i>${result.msg}`;
+            }
+        }
+
+        // Theme Switcher Logic
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-theme');
+            const isDark = body.classList.contains('dark-theme');
+            
+            document.getElementById('theme-btn-text').innerText = isDark ? "经典白模式" : "暗黑模式";
+            
+            if (editor) {
+                editor.setOption('theme', isDark ? 'dracula' : 'default');
+            }
+        }
+
+        // Global Keyboard Shortcut Handlers (F5 to Run)
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'F5') {
+                e.preventDefault();
+                runPythonScript();
+            }
+        });
+
+        // Window Onload Initialization
+        window.onload = () => {
+            initCodeMirror();
+            switchLesson(0);
+            initPyodideEngine();
+        };
+    </script>
+</body>
+</html>
