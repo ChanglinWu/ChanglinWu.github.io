@@ -18,8 +18,6 @@ print("Welcome to my GitHub page!")
 <dl>
 <dt>Name</dt>
 <dd>CHANGLIN</dd>
-<dt>Born</dt>
-<dd>1997</dd>
 <dt>Birthplace</dt>
 <dd>CN</dd>
 <dt>Constellation</dt>
@@ -34,7 +32,6 @@ Hong Kong, China
 Wish the best for the world!
 ```
 
-# Kowloon Tong Time
-
-[](https://time.is/Kowloon)
+# Links
+[Kowloon Tong Time](https://changlinwu.github.io/hko_cli_terminal_web_app.html)
 
