@@ -1,866 +1,841 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZeroBoard - 零配置实时云端留言板</title>
-    <!-- Tailwind CSS CDN -->
+    <title>极客极简留言板 (全局云端共享版)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            900: '#14532d',
+                        term: {
+                            bg: '#111827',
+                            card: '#1f2937',
+                            border: '#374151',
+                            accent: '#10b981',
+                            blue: '#3b82f6',
+                            purple: '#8b5cf6',
+                            text: '#f3f4f6',
+                            muted: '#9ca3af'
                         }
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
     <style>
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-attachment: fixed;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Fira Code', monospace;
         }
-        .font-mono-code {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        /* Soft Glassmorphism styles */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(22, 27, 34, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid rgba(48, 54, 61, 0.8);
         }
-        .dark .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(226, 232, 240, 0.7);
-            transition: all 0.2s ease-in-out;
-        }
-        .dark .glass-card {
-            background: rgba(30, 41, 59, 0.5);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .glass-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
+        .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d1117;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.3);
-            border-radius: 9999px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 3px;
         }
-        .dark ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .animate-pulse-dot {
+            animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar selection:bg-emerald-500 selection:text-black">
 
-    <!-- Decorative Background Glows -->
-    <div class="fixed top-0 left-1/3 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-3xl pointer-events-none -translate-y-1/2"></div>
-    <div class="fixed bottom-0 right-1/3 w-96 h-96 bg-blue-500/10 dark:bg-blue-500/15 rounded-full blur-3xl pointer-events-none translate-y-1/2"></div>
-
-    <!-- MAIN APP WRAPPER -->
-    <div class="max-w-6xl mx-auto px-4 py-6 md:py-8 relative z-10 flex flex-col min-h-screen">
-
-        <!-- HEADER NAVIGATION BAR -->
-        <header class="glass-panel rounded-2xl p-4 md:p-5 mb-6 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            
-            <!-- Left Logo & Room Indicator -->
-            <div class="flex items-center justify-between w-full md:w-auto gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-500/20">
-                        <i class="fa-solid fa-cloud-bolt"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-300 dark:to-cyan-400 bg-clip-text text-transparent">
-                                ZeroBoard
-                            </h1>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                零注册云端
-                            </span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
-                            <span>暗号频道: <strong id="current-room-name" class="text-slate-800 dark:text-slate-200 font-mono-code">public</strong></span>
-                            <button onclick="openRoomModal()" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
-                                <i class="fa-solid fa-pen-to-square"></i>切换
-                            </button>
-                        </p>
-                    </div>
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-gray-800 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="flex space-x-1.5">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
                 </div>
-
-                <!-- Sync Status Indicator Pill -->
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-200/60 dark:bg-slate-800/60 border border-slate-300/50 dark:border-slate-700/50 text-xs">
-                    <span id="sync-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span id="sync-status-text" class="font-medium text-slate-600 dark:text-slate-300">连接云端中...</span>
-                </div>
+                <span class="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-[#00ffcc] fa-terminal"></i> changlinwu/guestbook
+                </span>
             </div>
-
-            <!-- Right Action Toolbar -->
-            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-                <!-- Share Room Link Button -->
-                <button onclick="copyShareLink()" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-xs shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5 active:scale-95">
-                    <i class="fa-solid fa-share-nodes"></i>
-                    <span>复制分享链接</span>
-                </button>
-
-                <!-- Export Data Button -->
-                <button onclick="openExportModal()" title="备份/导出留言" class="p-2.5 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition text-xs">
-                    <i class="fa-solid fa-download"></i>
-                </button>
-
-                <!-- Theme Toggle -->
-                <button onclick="toggleTheme()" title="切换明暗主题" class="p-2.5 rounded-xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 transition text-xs">
-                    <i id="theme-icon" class="fa-solid fa-sun"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN LAYOUT CONTENT -->
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
             
-            <!-- LEFT COLUMN: MESSAGE COMPOSER (lg:col-span-5) -->
-            <section class="lg:col-span-5 glass-panel rounded-2xl p-5 shadow-lg sticky top-6">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
-                    <h2 class="text-sm font-bold flex items-center gap-2 text-slate-800 dark:text-slate-200">
-                        <i class="fa-solid fa-pen text-emerald-500"></i> 发布留言
-                    </h2>
-                    <span class="text-[11px] text-slate-400">自动同步所有访问者</span>
-                </div>
+            <div id="sync-status" class="flex items-center space-x-2 text-xs text-gray-400 bg-gray-900/80 px-2.5 py-1 rounded-full border border-gray-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot"></span>
+                <span id="sync-text">全局云端已连接</span>
+            </div>
+        </div>
+    </header>
 
-                <form id="composer-form" onsubmit="handleMessageSubmit(event)" class="space-y-4">
-                    <!-- Nickname Input -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">你的昵称：</label>
-                        <div class="relative">
-                            <input type="text" id="input-nickname" required maxlength="20" placeholder="例如：极客小明" class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition pr-10">
-                            <button type="button" onclick="generateRandomNickname()" title="随机昵称" class="absolute right-2 top-2 text-slate-400 hover:text-emerald-500 text-xs p-1">
-                                <i class="fa-solid fa-dice"></i>
-                            </button>
-                        </div>
-                    </div>
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-grow space-y-6">
 
-                    <!-- Category Pills -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">分类标签：</label>
-                        <div class="grid grid-cols-2 gap-2" id="category-selector">
-                            <button type="button" onclick="selectCategory('👋 问候')" class="cat-pill active border px-3 py-1.5 rounded-xl text-xs font-medium border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition flex items-center justify-center gap-1">
-                                👋 问候
-                            </button>
-                            <button type="button" onclick="selectCategory('💡 建议')" class="cat-pill border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-medium hover:border-emerald-500/50 transition flex items-center justify-center gap-1">
-                                💡 建议
-                            </button>
-                            <button type="button" onclick="selectCategory('💻 编程')" class="cat-pill border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-medium hover:border-emerald-500/50 transition flex items-center justify-center gap-1">
-                                💻 编程
-                            </button>
-                            <button type="button" onclick="selectCategory('☕ 杂谈')" class="cat-pill border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-medium hover:border-emerald-500/50 transition flex items-center justify-center gap-1">
-                                ☕ 杂谈
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Message Content -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5">
-                            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400">留言正文：</label>
-                            <span id="char-counter" class="text-[10px] text-slate-400">0 / 300</span>
-                        </div>
-                        <textarea id="input-content" required rows="4" maxlength="300" oninput="updateCharCount()" placeholder="在此写下留言内容，支持输入任意语言..." class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition resize-none leading-relaxed"></textarea>
-                        
-                        <!-- Quick Emojis Bar -->
-                        <div class="flex items-center gap-1.5 mt-1 text-xs">
-                            <span class="text-[10px] text-slate-400">快捷表情:</span>
-                            <button type="button" onclick="insertEmoji('🔥')" class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300 transition">🔥</button>
-                            <button type="button" onclick="insertEmoji('🚀')" class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300 transition">🚀</button>
-                            <button type="button" onclick="insertEmoji('💻')" class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300 transition">💻</button>
-                            <button type="button" onclick="insertEmoji('✨')" class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300 transition">✨</button>
-                            <button type="button" onclick="insertEmoji('❤️')" class="px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-300 transition">❤️</button>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" id="submit-btn" class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>发送留言</span>
-                    </button>
-                </form>
-            </section>
-
-            <!-- RIGHT COLUMN: FEED & SEARCH CONTROLS (lg:col-span-7) -->
-            <section class="lg:col-span-7 space-y-4">
-                
-                <!-- Filter & Search Toolbar -->
-                <div class="glass-panel rounded-2xl p-3.5 shadow-lg flex flex-col sm:flex-row gap-3 items-center justify-between">
-                    <!-- Search Input -->
-                    <div class="relative w-full sm:w-auto flex-1">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="search-keyword" oninput="renderFeed()" placeholder="搜索留言内容或作者..." class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
-                    </div>
-
-                    <!-- Filter Dropdowns -->
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                        <!-- Category Filter -->
-                        <select id="filter-category" onchange="renderFeed()" class="bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-slate-700 dark:text-slate-300">
-                            <option value="ALL">全部分类</option>
-                            <option value="👋 问候">👋 问候</option>
-                            <option value="💡 建议">💡 建议</option>
-                            <option value="💻 编程">💻 编程</option>
-                            <option value="☕ 杂谈">☕ 杂谈</option>
-                        </select>
-
-                        <!-- Sort Order -->
-                        <select id="filter-sort" onchange="renderFeed()" class="bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-slate-700 dark:text-slate-300">
-                            <option value="newest">按最新发布</option>
-                            <option value="popular">按最多点赞 🔥</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Messages Feed List -->
-                <div id="messages-container" class="space-y-3 min-h-[300px]">
-                    <!-- Skeleton Loader State -->
-                    <div class="glass-card rounded-2xl p-6 text-center space-y-2">
-                        <i class="fa-solid fa-spinner fa-spin text-emerald-500 text-2xl"></i>
-                        <p class="text-xs text-slate-500">正在同步云端留言...</p>
-                    </div>
-                </div>
-
-            </section>
-        </main>
-
-        <!-- FOOTER -->
-        <footer class="mt-8 pt-4 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <p>© 2026 ZeroBoard - 开箱即用 · 免账号云同步留言板</p>
-            <p class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                <span>Powered by JSONBlob API & GitHub Pages</span>
+        <!-- Banner Info -->
+        <div class="glass-panel rounded-xl p-5 border border-emerald-500/20 bg-emerald-950/10">
+            <h1 class="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                💬 实时极客留言板
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                所有访问者发布的留言均实时同步保存在全局云端。欢迎留下你的想法、建议或交流信息！
             </p>
-        </footer>
-    </div>
-
-    <!-- ROOM / CHANNEL SWITCH MODAL -->
-    <div id="room-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl max-w-sm w-full p-5 shadow-2xl relative space-y-4">
-            <button onclick="closeRoomModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-key"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-sm">切换暗号频道 (Room)</h3>
-                    <p class="text-xs text-slate-500">相同暗号的用户共享同一个云端留言空间</p>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400">频道暗号/名称：</label>
-                <input type="text" id="modal-room-input" placeholder="例如: my-blog-2026" class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs font-mono-code focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeRoomModal()" class="px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-semibold hover:bg-slate-300 transition">取消</button>
-                <button onclick="submitRoomSwitch()" class="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition shadow">确认切换</button>
-            </div>
         </div>
-    </div>
 
-    <!-- EXPORT DATA MODAL -->
-    <div id="export-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl max-w-sm w-full p-5 shadow-2xl relative space-y-4">
-            <button onclick="closeExportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-file-export"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-sm">备份 / 导出留言数据</h3>
-                    <p class="text-xs text-slate-500">将当前频道的留言一键离线保存</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 pt-2">
-                <button onclick="exportData('json')" class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-white/40 dark:bg-slate-900/40 text-center space-y-1 transition group">
-                    <i class="fa-solid fa-file-code text-emerald-500 text-xl group-hover:scale-110 transition"></i>
-                    <div class="text-xs font-bold">导出 JSON</div>
-                    <div class="text-[10px] text-slate-400">开发与完整结构备份</div>
-                </button>
-                <button onclick="exportData('csv')" class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 bg-white/40 dark:bg-slate-900/40 text-center space-y-1 transition group">
-                    <i class="fa-solid fa-file-csv text-teal-500 text-xl group-hover:scale-110 transition"></i>
-                    <div class="text-xs font-bold">导出 CSV</div>
-                    <div class="text-[10px] text-slate-400">Excel / 表格文件打开</div>
+        <!-- Leave Message Form -->
+        <section class="glass-panel rounded-xl p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3">
+                <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-emerald-400"></i> 发表新留言
+                </h2>
+                <button onclick="generateRandomNickname()" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                    <i class="fa-solid fa-dice"></i> 随机生成昵称
                 </button>
             </div>
+
+            <form id="comment-form" onsubmit="handlePostComment(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Nickname -->
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">昵称 / Username</label>
+                        <input type="text" id="input-author" required placeholder="例如: CyberCoder"
+                               class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                    <!-- Tag Selection -->
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">分类标签 / Tag</label>
+                        <select id="input-tag" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+                            <option value="👋 问候">👋 问候 (Greetings)</option>
+                            <option value="💻 编程">💻 编程 (Tech)</option>
+                            <option value="💡 建议">💡 建议 (Feedback)</option>
+                            <option value="☕ 杂谈">☕ 杂谈 (Casual)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">留言内容 / Message</label>
+                    <textarea id="input-content" rows="3" required placeholder="在此输入你的留言..."
+                              class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition resize-y"
+                              maxlength="300" oninput="updateCharCount()"></textarea>
+                    <div class="flex justify-between items-center text-xs text-gray-500 mt-1">
+                        <!-- Quick Emojis -->
+                        <div class="flex gap-2">
+                            <button type="button" onclick="insertEmoji('🚀')" class="hover:text-white transition">🚀</button>
+                            <button type="button" onclick="insertEmoji('🎉')" class="hover:text-white transition">🎉</button>
+                            <button type="button" onclick="insertEmoji('👍')" class="hover:text-white transition">👍</button>
+                            <button type="button" onclick="insertEmoji('🔥')" class="hover:text-white transition">🔥</button>
+                            <button type="button" onclick="insertEmoji('💻')" class="hover:text-white transition">💻</button>
+                        </div>
+                        <span id="char-count">0 / 300</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" id="submit-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2 rounded-lg text-sm flex items-center gap-2 transition shadow-lg shadow-emerald-950/50">
+                        <i class="fa-solid fa-paper-plane"></i> 发送留言
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Messages List Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-comments text-emerald-400"></i> 全部留言 
+                <span id="message-counter" class="bg-gray-800 text-emerald-400 text-xs px-2 py-0.5 rounded-full border border-gray-700">0</span>
+            </h3>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="syncDataFromCloud()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs text-gray-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                    <i id="refresh-icon" class="fa-solid fa-rotate"></i> 刷新数据
+                </button>
+                <select id="sort-order" onchange="renderMessages()" class="bg-gray-900 border border-gray-700 text-xs text-gray-300 px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-emerald-500">
+                    <option value="newest">🕒 按最新发布</option>
+                    <option value="popular">❤️ 按最多点赞</option>
+                </select>
+            </div>
         </div>
-    </div>
 
-    <!-- TOAST NOTIFICATION CONTAINER -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+        <!-- Messages Container -->
+        <div id="messages-container" class="space-y-3">
+            <!-- Loading Spinner -->
+            <div id="loading-state" class="text-center py-12 text-gray-500">
+                <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400 mb-2"></i>
+                <p class="text-xs">正在连接全局云端加载留言...</p>
+            </div>
+        </div>
 
-    <!-- APPLICATION LOGIC SCRIPT -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-panel border-t border-gray-800 py-4 px-4 text-center text-xs text-gray-500 mt-8">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>Powered by GitHub Pages & Global Cloud Sync</span>
+            <div class="flex gap-4">
+                <button onclick="exportJSON()" class="hover:text-emerald-400 transition"><i class="fa-solid fa-download"></i> 导出 JSON</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS Logic -->
     <script>
-        // API Endpoint for Zero-Config Free JSON Cloud Storage
-        const JSONBLOB_BASE_URL = 'https://jsonblob.com/api/jsonBlob';
+        // 固定全局主云端节点 ID（保证所有人访问同一空间）
+        const GLOBAL_MASTER_BLOB_ID = "1347912345678901234";
+        const API_BASE = "https://jsonblob.com/api/jsonBlob/";
 
-        // Global State
-        let currentRoomName = 'public';
-        let currentBlobId = null;
-        let selectedCategory = '👋 问候';
         let messages = [];
-        let syncTimer = null;
-        let isOnline = false;
+        const randomAdjectives = ['Cyber', 'Async', 'Binary', 'Quantum', 'Glitch', 'Matrix', 'Terminal', 'Zero'];
+        const randomNouns = ['Coder', 'Hacker', 'Explorer', 'Dev', 'Pioneer', 'Panda', 'Geek', 'Runner'];
 
-        // Default Welcome Message Seed Data
-        const DEFAULT_SEED_MESSAGES = [
-            {
-                id: 'msg-welcome-01',
-                author: 'ZeroBoard 助手',
-                category: '👋 问候',
-                content: '🎉 欢迎使用 ZeroBoard 留言板！无需注册任何账号或配置后端，把网页文件放到 GitHub Pages 就能拥有属于你自己的实时留言交流区！',
-                likes: 12,
-                createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
-            },
-            {
-                id: 'msg-welcome-02',
-                author: '网页小灵通',
-                category: '💻 编程',
-                content: '点击右上角的“复制分享链接”，其他人打开链接就可以在同一个暗号频道下和你跨设备实时互动交流了！',
-                likes: 8,
-                createdAt: new Date(Date.now() - 1800000).toISOString()
-            }
-        ];
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            generateRandomNickname();
+            syncDataFromCloud();
+            // 每 6 秒自动轮询云端同步
+            setInterval(syncDataFromCloud, 6000);
+        });
 
-        // --- ROOM & CLOUD SYNC ENGINE ---
-
-        // Initialize Room & Load Data
-        async function initApp() {
-            // Read query parameters
-            const params = new URLSearchParams(window.location.search);
-            const roomParam = params.get('room') || 'public';
-            const idParam = params.get('id');
-
-            currentRoomName = roomParam;
-            document.getElementById('current-room-name').innerText = currentRoomName;
-
-            // Resolve Blob ID
-            if (idParam) {
-                currentBlobId = idParam;
-            } else {
-                // Check local storage mapping for custom room
-                const localMappedId = localStorage.getItem(`zeroboard_room_${currentRoomName}`);
-                if (localMappedId) {
-                    currentBlobId = localMappedId;
-                }
-            }
-
-            // Sync from Cloud or Initialize
-            await syncFromCloud();
-
-            // Start polling every 6 seconds for live real-time sync
-            if (syncTimer) clearInterval(syncTimer);
-            syncTimer = setInterval(syncFromCloud, 6000);
+        // 生成随机昵称
+        function generateRandomNickname() {
+            const adj = randomAdjectives[Math.floor(Math.random() * randomAdjectives.length)];
+            const noun = randomNouns[Math.floor(Math.random() * randomNouns.length)];
+            const num = Math.floor(Math.random() * 90 + 10);
+            document.getElementById('input-author').value = `${adj}${noun}_${num}`;
         }
 
-        // Fetch data from Cloud (JSONBlob) with LocalStorage fallback
-        async function syncFromCloud() {
-            if (!currentBlobId) {
-                // First time creating this room in cloud
-                await createCloudRoom(DEFAULT_SEED_MESSAGES);
-                return;
-            }
+        // 字符计数
+        function updateCharCount() {
+            const content = document.getElementById('input-content').value;
+            document.getElementById('char-count').innerText = `${content.length} / 300`;
+        }
+
+        // 快捷插入 Emoji
+        function insertEmoji(emoji) {
+            const area = document.getElementById('input-content');
+            area.value += emoji;
+            updateCharCount();
+            area.focus();
+        }
+
+        // 云端获取数据
+        async function syncDataFromCloud() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
 
             try {
-                const response = await fetch(`${JSONBLOB_BASE_URL}/${currentBlobId}`, {
+                const res = await fetch(`${API_BASE}${GLOBAL_MASTER_BLOB_ID}`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
+                if (res.ok) {
+                    const data = await res.json();
                     if (Array.isArray(data)) {
                         messages = data;
-                        saveLocalBackup();
-                        updateSyncStatus(true, "🟢 云端同步");
-                        renderFeed();
-                        return;
+                        renderMessages();
+                        updateStatus(true, "全局云端已连接");
                     }
+                } else if (res.status === 404) {
+                    // 如果云端节点被释放，自动全新建初始化节点
+                    await pushDataToCloud([]);
                 }
-                throw new Error("HTTP Status " + response.status);
             } catch (err) {
-                console.warn("Cloud sync failed, falling back to LocalStorage:", err);
-                updateSyncStatus(false, "🟡 离线模式");
-                loadLocalBackup();
-                renderFeed();
+                console.warn("云端同步小波动:", err);
+                updateStatus(false, "云端连接重试中...");
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('fa-spin');
             }
         }
 
-        // Create new JSONBlob endpoint
-        async function createCloudRoom(initialData) {
+        // 提交数据到云端
+        async function pushDataToCloud(dataToPush) {
             try {
-                const response = await fetch(JSONBLOB_BASE_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(initialData)
-                });
-
-                const locationHeader = response.headers.get('Location');
-                if (locationHeader) {
-                    currentBlobId = locationHeader.split('/').pop();
-                } else {
-                    const resJson = await response.json();
-                    currentBlobId = resJson.id;
-                }
-
-                if (currentBlobId) {
-                    // Save mapping locally
-                    localStorage.setItem(`zeroboard_room_${currentRoomName}`, currentBlobId);
-                    messages = initialData;
-                    saveLocalBackup();
-                    updateSyncStatus(true, "🟢 云端同步");
-                    renderFeed();
-                    return;
-                }
-            } catch (err) {
-                console.warn("Could not create cloud room, operating in offline mode:", err);
-            }
-
-            // Fallback if cloud creation fails
-            updateSyncStatus(false, "🟡 离线模式");
-            loadLocalBackup();
-            renderFeed();
-        }
-
-        // Push local updates to Cloud
-        async function pushToCloud() {
-            saveLocalBackup();
-            if (!currentBlobId) {
-                await createCloudRoom(messages);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${JSONBLOB_BASE_URL}/${currentBlobId}`, {
+                const res = await fetch(`${API_BASE}${GLOBAL_MASTER_BLOB_ID}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(messages)
+                    body: JSON.stringify(dataToPush)
                 });
-
-                if (response.ok) {
-                    updateSyncStatus(true, "🟢 云端同步");
-                } else {
-                    updateSyncStatus(false, "🟡 离线保存");
-                }
+                return res.ok;
             } catch (err) {
-                console.warn("Cloud push error:", err);
-                updateSyncStatus(false, "🟡 离线保存");
+                console.error("提交云端失败:", err);
+                return false;
             }
         }
 
-        // Local Storage Helpers
-        function saveLocalBackup() {
-            localStorage.setItem(`zeroboard_data_${currentRoomName}`, JSON.stringify(messages));
-        }
+        // 发布留言
+        async function handlePostComment(e) {
+            e.preventDefault();
 
-        function loadLocalBackup() {
-            const raw = localStorage.getItem(`zeroboard_data_${currentRoomName}`);
-            if (raw) {
-                try {
-                    messages = JSON.parse(raw);
-                } catch (e) {
-                    messages = DEFAULT_SEED_MESSAGES;
-                }
+            const author = document.getElementById('input-author').value.trim();
+            const tag = document.getElementById('input-tag').value;
+            const content = document.getElementById('input-content').value.trim();
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (!author || !content) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 发送中...`;
+
+            const newMsg = {
+                id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                author: author,
+                tag: tag,
+                content: content,
+                likes: 0,
+                timestamp: new Date().toISOString()
+            };
+
+            // 最新留言排在最前
+            messages.unshift(newMsg);
+
+            const success = await pushDataToCloud(messages);
+            if (success) {
+                document.getElementById('input-content').value = '';
+                updateCharCount();
+                renderMessages();
             } else {
-                messages = DEFAULT_SEED_MESSAGES;
+                alert("发送遇到网络延迟，请重试！");
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 发送留言`;
+        }
+
+        // 点赞逻辑
+        async function handleLike(id) {
+            const target = messages.find(m => m.id === id);
+            if (target) {
+                target.likes += 1;
+                renderMessages();
+                await pushDataToCloud(messages);
             }
         }
 
-        function updateSyncStatus(online, text) {
-            isOnline = online;
-            const dot = document.getElementById('sync-status-dot');
-            const txt = document.getElementById('sync-status-text');
-
-            txt.innerText = text;
-            if (online) {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
-            } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
-            }
-        }
-
-        // --- RENDER FEED & CARDS ---
-
-        function renderFeed() {
-            const keyword = document.getElementById('search-keyword').value.trim().toLowerCase();
-            const categoryFilter = document.getElementById('filter-category').value;
-            const sortOrder = document.getElementById('filter-sort').value;
-
-            // Filter
-            let filtered = messages.filter(msg => {
-                const matchKey = (msg.content || '').toLowerCase().includes(keyword) || (msg.author || '').toLowerCase().includes(keyword);
-                const matchCat = categoryFilter === 'ALL' || msg.category === categoryFilter;
-                return matchKey && matchCat;
-            });
-
-            // Sort
-            if (sortOrder === 'popular') {
-                filtered.sort((a, b) => (b.likes || 0) - (a.likes || 0) || new Date(b.createdAt) - new Date(a.createdAt));
-            } else {
-                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            }
-
+        // 渲染留言列表
+        function renderMessages() {
             const container = document.getElementById('messages-container');
+            const counter = document.getElementById('message-counter');
+            const sortOrder = document.getElementById('sort-order').value;
 
-            if (filtered.length === 0) {
+            if (counter) counter.innerText = messages.length;
+
+            if (!messages || messages.length === 0) {
                 container.innerHTML = `
-                    <div class="glass-card rounded-2xl p-8 text-center text-slate-400 space-y-2">
-                        <i class="fa-regular fa-comments text-3xl opacity-40"></i>
-                        <p class="text-xs font-medium">暂无相关的留言信息</p>
-                        <p class="text-[11px]">快来成为第一个留下足迹的人吧！</p>
+                    <div class="glass-panel rounded-xl p-8 text-center text-gray-500">
+                        <i class="fa-regular fa-comment-dots text-3xl mb-2 text-gray-600"></i>
+                        <p class="text-sm">暂无留言，快来抢占沙发吧！</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = filtered.map(msg => {
-                const initials = getInitials(msg.author);
-                const gradientClass = getAvatarGradientClass(msg.author);
-                const timeAgoStr = formatTimeAgo(msg.createdAt);
+            // 排序
+            let sorted = [...messages];
+            if (sortOrder === 'newest') {
+                sorted.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            } else if (sortOrder === 'popular') {
+                sorted.sort((a, b) => b.likes - a.likes);
+            }
+
+            container.innerHTML = sorted.map(msg => {
+                const dateStr = new Date(msg.timestamp).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
 
                 return `
-                    <article class="glass-card rounded-2xl p-4 md:p-5 space-y-3 relative group">
-                        <!-- Card Header -->
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                <!-- Initials Avatar -->
-                                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white font-bold text-xs shadow-md flex-none">
-                                    ${escapeHtml(initials)}
+                    <div class="glass-panel rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-blue-600 flex items-center justify-center font-bold text-white text-xs">
+                                    ${escapeHtml(msg.author.charAt(0).toUpperCase())}
                                 </div>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="font-bold text-xs md:text-sm text-slate-800 dark:text-slate-100">${escapeHtml(msg.author)}</h3>
-                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-medium border border-slate-300/40 dark:border-slate-700/40">
-                                            ${escapeHtml(msg.category || '👋 问候')}
-                                        </span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 font-mono-code mt-0.5">${timeAgoStr}</p>
-                                </div>
+                                <span class="font-semibold text-gray-200">${escapeHtml(msg.author)}</span>
+                                <span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700">${escapeHtml(msg.tag)}</span>
                             </div>
+                            <span class="text-gray-500">${dateStr}</span>
                         </div>
+                        
+                        <p class="text-sm text-gray-300 leading-relaxed break-words whitespace-pre-wrap pl-9">
+                            ${escapeHtml(msg.content)}
+                        </p>
 
-                        <!-- Card Body -->
-                        <p class="text-xs md:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(msg.content)}</p>
-
-                        <!-- Card Footer Actions -->
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
-                            <button onclick="likeMessage('${msg.id}')" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-semibold text-xs transition active:scale-90">
-                                <i class="fa-solid fa-heart"></i>
+                        <div class="flex justify-end pt-1">
+                            <button onclick="handleLike('${msg.id}')" class="text-xs text-gray-400 hover:text-red-400 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-heart text-red-500"></i>
                                 <span>${msg.likes || 0}</span>
                             </button>
-                            <span class="text-[10px] text-slate-400 font-mono-code">ID: ${msg.id.substring(0, 8)}</span>
                         </div>
-                    </article>
+                    </div>
                 `;
             }).join('');
         }
 
-        // --- USER INTERACTIONS ---
+        // 状态更新
+        function updateStatus(isOk, text) {
+            const statusText = document.getElementById('sync-text');
+            if (statusText) statusText.innerText = text;
+        }
 
-        // Submit new message
-        async function handleMessageSubmit(e) {
+        // HTML 转义防 XSS
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+
+        // 导出 JSON
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(messages, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `guestbook_backup_${Date.now()}.json`;
+            a.click();
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极客极简留言板 (全局云端共享版)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'monospace'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        term: {
+                            bg: '#111827',
+                            card: '#1f2937',
+                            border: '#374151',
+                            accent: '#10b981',
+                            blue: '#3b82f6',
+                            purple: '#8b5cf6',
+                            text: '#f3f4f6',
+                            muted: '#9ca3af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Fira Code', monospace;
+        }
+        .glass-panel {
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(48, 54, 61, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 3px;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .animate-pulse-dot {
+            animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar selection:bg-emerald-500 selection:text-black">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-gray-800 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="flex space-x-1.5">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                </div>
+                <span class="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                    <i class="fa-solid fa-[#00ffcc] fa-terminal"></i> changlinwu/guestbook
+                </span>
+            </div>
+            
+            <div id="sync-status" class="flex items-center space-x-2 text-xs text-gray-400 bg-gray-900/80 px-2.5 py-1 rounded-full border border-gray-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot"></span>
+                <span id="sync-text">全局云端已连接</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-grow space-y-6">
+
+        <!-- Banner Info -->
+        <div class="glass-panel rounded-xl p-5 border border-emerald-500/20 bg-emerald-950/10">
+            <h1 class="text-xl sm:text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                💬 实时极客留言板
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                所有访问者发布的留言均实时同步保存在全局云端。欢迎留下你的想法、建议或交流信息！
+            </p>
+        </div>
+
+        <!-- Leave Message Form -->
+        <section class="glass-panel rounded-xl p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3">
+                <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-emerald-400"></i> 发表新留言
+                </h2>
+                <button onclick="generateRandomNickname()" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+                    <i class="fa-solid fa-dice"></i> 随机生成昵称
+                </button>
+            </div>
+
+            <form id="comment-form" onsubmit="handlePostComment(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Nickname -->
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">昵称 / Username</label>
+                        <input type="text" id="input-author" required placeholder="例如: CyberCoder"
+                               class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+                    </div>
+                    <!-- Tag Selection -->
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">分类标签 / Tag</label>
+                        <select id="input-tag" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+                            <option value="👋 问候">👋 问候 (Greetings)</option>
+                            <option value="💻 编程">💻 编程 (Tech)</option>
+                            <option value="💡 建议">💡 建议 (Feedback)</option>
+                            <option value="☕ 杂谈">☕ 杂谈 (Casual)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">留言内容 / Message</label>
+                    <textarea id="input-content" rows="3" required placeholder="在此输入你的留言..."
+                              class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition resize-y"
+                              maxlength="300" oninput="updateCharCount()"></textarea>
+                    <div class="flex justify-between items-center text-xs text-gray-500 mt-1">
+                        <!-- Quick Emojis -->
+                        <div class="flex gap-2">
+                            <button type="button" onclick="insertEmoji('🚀')" class="hover:text-white transition">🚀</button>
+                            <button type="button" onclick="insertEmoji('🎉')" class="hover:text-white transition">🎉</button>
+                            <button type="button" onclick="insertEmoji('👍')" class="hover:text-white transition">👍</button>
+                            <button type="button" onclick="insertEmoji('🔥')" class="hover:text-white transition">🔥</button>
+                            <button type="button" onclick="insertEmoji('💻')" class="hover:text-white transition">💻</button>
+                        </div>
+                        <span id="char-count">0 / 300</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" id="submit-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2 rounded-lg text-sm flex items-center gap-2 transition shadow-lg shadow-emerald-950/50">
+                        <i class="fa-solid fa-paper-plane"></i> 发送留言
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Messages List Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-comments text-emerald-400"></i> 全部留言 
+                <span id="message-counter" class="bg-gray-800 text-emerald-400 text-xs px-2 py-0.5 rounded-full border border-gray-700">0</span>
+            </h3>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="syncDataFromCloud()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs text-gray-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                    <i id="refresh-icon" class="fa-solid fa-rotate"></i> 刷新数据
+                </button>
+                <select id="sort-order" onchange="renderMessages()" class="bg-gray-900 border border-gray-700 text-xs text-gray-300 px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-emerald-500">
+                    <option value="newest">🕒 按最新发布</option>
+                    <option value="popular">❤️ 按最多点赞</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messages-container" class="space-y-3">
+            <!-- Loading Spinner -->
+            <div id="loading-state" class="text-center py-12 text-gray-500">
+                <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-400 mb-2"></i>
+                <p class="text-xs">正在连接全局云端加载留言...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-panel border-t border-gray-800 py-4 px-4 text-center text-xs text-gray-500 mt-8">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>Powered by GitHub Pages & Global Cloud Sync</span>
+            <div class="flex gap-4">
+                <button onclick="exportJSON()" class="hover:text-emerald-400 transition"><i class="fa-solid fa-download"></i> 导出 JSON</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS Logic -->
+    <script>
+        // 固定全局主云端节点 ID（保证所有人访问同一空间）
+        const GLOBAL_MASTER_BLOB_ID = "1347912345678901234";
+        const API_BASE = "https://jsonblob.com/api/jsonBlob/";
+
+        let messages = [];
+        const randomAdjectives = ['Cyber', 'Async', 'Binary', 'Quantum', 'Glitch', 'Matrix', 'Terminal', 'Zero'];
+        const randomNouns = ['Coder', 'Hacker', 'Explorer', 'Dev', 'Pioneer', 'Panda', 'Geek', 'Runner'];
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            generateRandomNickname();
+            syncDataFromCloud();
+            // 每 6 秒自动轮询云端同步
+            setInterval(syncDataFromCloud, 6000);
+        });
+
+        // 生成随机昵称
+        function generateRandomNickname() {
+            const adj = randomAdjectives[Math.floor(Math.random() * randomAdjectives.length)];
+            const noun = randomNouns[Math.floor(Math.random() * randomNouns.length)];
+            const num = Math.floor(Math.random() * 90 + 10);
+            document.getElementById('input-author').value = `${adj}${noun}_${num}`;
+        }
+
+        // 字符计数
+        function updateCharCount() {
+            const content = document.getElementById('input-content').value;
+            document.getElementById('char-count').innerText = `${content.length} / 300`;
+        }
+
+        // 快捷插入 Emoji
+        function insertEmoji(emoji) {
+            const area = document.getElementById('input-content');
+            area.value += emoji;
+            updateCharCount();
+            area.focus();
+        }
+
+        // 云端获取数据
+        async function syncDataFromCloud() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+            try {
+                const res = await fetch(`${API_BASE}${GLOBAL_MASTER_BLOB_ID}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) {
+                        messages = data;
+                        renderMessages();
+                        updateStatus(true, "全局云端已连接");
+                    }
+                } else if (res.status === 404) {
+                    // 如果云端节点被释放，自动全新建初始化节点
+                    await pushDataToCloud([]);
+                }
+            } catch (err) {
+                console.warn("云端同步小波动:", err);
+                updateStatus(false, "云端连接重试中...");
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // 提交数据到云端
+        async function pushDataToCloud(dataToPush) {
+            try {
+                const res = await fetch(`${API_BASE}${GLOBAL_MASTER_BLOB_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(dataToPush)
+                });
+                return res.ok;
+            } catch (err) {
+                console.error("提交云端失败:", err);
+                return false;
+            }
+        }
+
+        // 发布留言
+        async function handlePostComment(e) {
             e.preventDefault();
 
-            const nickname = document.getElementById('input-nickname').value.trim();
+            const author = document.getElementById('input-author').value.trim();
+            const tag = document.getElementById('input-tag').value;
             const content = document.getElementById('input-content').value.trim();
-
-            if (!nickname || !content) {
-                showToast("请填写完整的昵称与留言内容", "error");
-                return;
-            }
-
             const submitBtn = document.getElementById('submit-btn');
+
+            if (!author || !content) return;
+
             submitBtn.disabled = true;
             submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 发送中...`;
 
             const newMsg = {
-                id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-                author: nickname,
-                category: selectedCategory,
+                id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                author: author,
+                tag: tag,
                 content: content,
                 likes: 0,
-                createdAt: new Date().toISOString()
+                timestamp: new Date().toISOString()
             };
 
+            // 最新留言排在最前
             messages.unshift(newMsg);
-            renderFeed();
 
-            document.getElementById('input-content').value = '';
-            updateCharCount();
-
-            await pushToCloud();
+            const success = await pushDataToCloud(messages);
+            if (success) {
+                document.getElementById('input-content').value = '';
+                updateCharCount();
+                renderMessages();
+            } else {
+                alert("发送遇到网络延迟，请重试！");
+            }
 
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>发送留言</span>`;
-
-            showToast("留言已成功发表并同步！", "success");
+            submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> 发送留言`;
         }
 
-        // Like Message
-        async function likeMessage(msgId) {
-            const target = messages.find(m => m.id === msgId);
+        // 点赞逻辑
+        async function handleLike(id) {
+            const target = messages.find(m => m.id === id);
             if (target) {
-                target.likes = (target.likes || 0) + 1;
-                renderFeed();
-                showToast("点赞成功 ❤️", "success");
-                await pushToCloud();
+                target.likes += 1;
+                renderMessages();
+                await pushDataToCloud(messages);
             }
         }
 
-        // Category Selection
-        function selectCategory(cat) {
-            selectedCategory = cat;
-            const pills = document.querySelectorAll('#category-selector .cat-pill');
-            pills.forEach(pill => {
-                if (pill.innerText.includes(cat)) {
-                    pill.className = "cat-pill active border px-3 py-1.5 rounded-xl text-xs font-medium border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition flex items-center justify-center gap-1";
-                } else {
-                    pill.className = "cat-pill border border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl text-xs font-medium hover:border-emerald-500/50 transition flex items-center justify-center gap-1";
-                }
-            });
-        }
+        // 渲染留言列表
+        function renderMessages() {
+            const container = document.getElementById('messages-container');
+            const counter = document.getElementById('message-counter');
+            const sortOrder = document.getElementById('sort-order').value;
 
-        // Random Nickname Generator
-        function generateRandomNickname() {
-            const prefixes = ["极客", "赛博", "云端", "星际", "代码", "量子", "像素", "神秘"];
-            const nouns = ["创作者", "探索者", "旅人", "极客", "大白", "黑客", "阿杰", "小明"];
-            const num = Math.floor(Math.random() * 900 + 100);
+            if (counter) counter.innerText = messages.length;
 
-            const randomName = `${prefixes[Math.floor(Math.random()*prefixes.length)]}${nouns[Math.floor(Math.random()*nouns.length)]}_${num}`;
-            document.getElementById('input-nickname').value = randomName;
-        }
-
-        function updateCharCount() {
-            const val = document.getElementById('input-content').value;
-            document.getElementById('char-counter').innerText = `${val.length} / 300`;
-        }
-
-        function insertEmoji(emoji) {
-            const input = document.getElementById('input-content');
-            input.value += emoji;
-            updateCharCount();
-            input.focus();
-        }
-
-        // --- ROOM & SHARE FUNCTIONS ---
-
-        function openRoomModal() {
-            document.getElementById('modal-room-input').value = currentRoomName;
-            document.getElementById('room-modal').classList.remove('hidden');
-        }
-
-        function closeRoomModal() {
-            document.getElementById('room-modal').classList.add('hidden');
-        }
-
-        function submitRoomSwitch() {
-            const val = document.getElementById('modal-room-input').value.trim().toLowerCase();
-            if (!val) return;
-
-            closeRoomModal();
-
-            // Construct new URL with room name
-            const newUrl = `${window.location.pathname}?room=${encodeURIComponent(val)}`;
-            window.location.href = newUrl;
-        }
-
-        // Copy Share Link
-        function copyShareLink() {
-            let shareUrl = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(currentRoomName)}`;
-            if (currentBlobId) {
-                shareUrl += `&id=${currentBlobId}`;
-            }
-
-            // Standard ExecCommand fallback for robust iframe handling
-            const tempInput = document.createElement('input');
-            tempInput.value = shareUrl;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            
-            try {
-                document.execCommand('copy');
-                showToast("专属频道链接已复制到剪贴板！", "success");
-            } catch (err) {
-                showToast("复制失败，请手动复制 URL", "error");
-            } finally {
-                document.body.removeChild(tempInput);
-            }
-        }
-
-        // Export Data
-        function openExportModal() {
-            document.getElementById('export-modal').classList.remove('hidden');
-        }
-
-        function closeExportModal() {
-            document.getElementById('export-modal').classList.add('hidden');
-        }
-
-        function exportData(type) {
-            if (messages.length === 0) {
-                showToast("当前频道无留言可导出", "error");
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-panel rounded-xl p-8 text-center text-gray-500">
+                        <i class="fa-regular fa-comment-dots text-3xl mb-2 text-gray-600"></i>
+                        <p class="text-sm">暂无留言，快来抢占沙发吧！</p>
+                    </div>
+                `;
                 return;
             }
 
-            if (type === 'json') {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(messages, null, 2));
-                triggerDownload(dataStr, `guestbook-${currentRoomName}-backup.json`);
-            } else if (type === 'csv') {
-                let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 Excel
-                csvContent += `"ID","Nickname","Category","Content","Likes","CreatedAt"\n`;
+            // 排序
+            let sorted = [...messages];
+            if (sortOrder === 'newest') {
+                sorted.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            } else if (sortOrder === 'popular') {
+                sorted.sort((a, b) => b.likes - a.likes);
+            }
 
-                messages.forEach(msg => {
-                    const cleanContent = (msg.content || '').replace(/"/g, '""');
-                    csvContent += `"${msg.id}","${msg.author}","${msg.category}","${cleanContent}","${msg.likes || 0}","${msg.createdAt}"\n`;
+            container.innerHTML = sorted.map(msg => {
+                const dateStr = new Date(msg.timestamp).toLocaleString('zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
                 });
 
-                triggerDownload(csvContent, `guestbook-${currentRoomName}-backup.csv`);
-            }
-            closeExportModal();
-            showToast("备份数据下载中...", "success");
+                return `
+                    <div class="glass-panel rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-600 to-blue-600 flex items-center justify-center font-bold text-white text-xs">
+                                    ${escapeHtml(msg.author.charAt(0).toUpperCase())}
+                                </div>
+                                <span class="font-semibold text-gray-200">${escapeHtml(msg.author)}</span>
+                                <span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700">${escapeHtml(msg.tag)}</span>
+                            </div>
+                            <span class="text-gray-500">${dateStr}</span>
+                        </div>
+                        
+                        <p class="text-sm text-gray-300 leading-relaxed break-words whitespace-pre-wrap pl-9">
+                            ${escapeHtml(msg.content)}
+                        </p>
+
+                        <div class="flex justify-end pt-1">
+                            <button onclick="handleLike('${msg.id}')" class="text-xs text-gray-400 hover:text-red-400 bg-gray-900 hover:bg-gray-800 border border-gray-800 px-2.5 py-1 rounded-md flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-heart text-red-500"></i>
+                                <span>${msg.likes || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function triggerDownload(contentUri, fileName) {
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", contentUri);
-            dlAnchorElem.setAttribute("download", fileName);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
+        // 状态更新
+        function updateStatus(isOk, text) {
+            const statusText = document.getElementById('sync-text');
+            if (statusText) statusText.innerText = text;
         }
 
-        // --- UTILITY HELPERS ---
-
-        function getInitials(name) {
-            if (!name) return '?';
-            const clean = name.trim();
-            if (/^[a-zA-Z0-9]/.test(clean)) {
-                return clean.substring(0, 2).toUpperCase();
-            }
-            return clean.substring(0, 2);
-        }
-
-        function getAvatarGradientClass(name) {
-            let hash = 0;
-            for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            const gradients = [
-                'from-emerald-500 to-teal-600',
-                'from-cyan-500 to-blue-600',
-                'from-violet-500 to-purple-600',
-                'from-rose-500 to-pink-600',
-                'from-amber-500 to-orange-600',
-                'from-indigo-500 to-blue-700'
-            ];
-            return gradients[Math.abs(hash) % gradients.length];
-        }
-
-        function formatTimeAgo(isoString) {
-            if (!isoString) return '刚刚';
-            const date = new Date(isoString);
-            const diffSec = Math.floor((new Date() - date) / 1000);
-
-            if (diffSec < 30) return '刚刚';
-            if (diffSec < 60) return `${diffSec} 秒前`;
-            if (diffSec < 3600) return `${Math.floor(diffSec / 60)} 分钟前`;
-            if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} 小时前`;
-            return `${date.getMonth() + 1}月${date.getDate()}日`;
-        }
-
+        // HTML 转义防 XSS
         function escapeHtml(str) {
-            return String(str || '')
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+            return String(str || '').replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
         }
 
-        // Toast Notification System
-        function showToast(message, type = "info") {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
-            
-            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-white text-xs font-medium shadow-xl ${bgColor} flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0`;
-            toast.innerHTML = `
-                <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i>
-                <span>${escapeHtml(message)}</span>
-            `;
-
-            container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-4', 'opacity-0');
-            }, 10);
-
-            setTimeout(() => {
-                toast.classList.add('translate-y-4', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+        // 导出 JSON
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(messages, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `guestbook_backup_${Date.now()}.json`;
+            a.click();
         }
-
-        // Theme Toggle
-        function toggleTheme() {
-            const html = document.documentElement;
-            html.classList.toggle('dark');
-            const isDark = html.classList.contains('dark');
-            document.getElementById('theme-icon').className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
-        }
-
-        // Page Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            generateRandomNickname();
-            initApp();
-        });
     </script>
 </body>
 </html>
