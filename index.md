@@ -33,4 +33,4 @@ Wish the best for the world!
 
 [Py3 practice](https://changlinwu.github.io/python_idle_online_teaching_platform.html)
 
-[Chat Board](https://changlinwu.github.io/cyberboard_realtime_guestbook.html)
+[Chat Board](https://changlinwu.github.io/100_zero_config_realtime_guestbook.html)
