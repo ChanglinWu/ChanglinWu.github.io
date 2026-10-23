@@ -17,7 +17,7 @@ print("Welcome to my GitHub page!")
 
 <dl>
 <dt>Name</dt>
-<dd>CHANGLIN</dd>
+<dd>WU Changlin</dd>
 <dt>Birthplace</dt>
 <dd>CN</dd>
 <dt>Constellation</dt>
@@ -25,13 +25,9 @@ print("Welcome to my GitHub page!")
 </dl>
 
 ```
-Hong Kong, China
-```
-
-```
 Wish the best for the world!
 ```
 
-# Links
+# Links:
 [Kowloon Tong Time](https://changlinwu.github.io/hko_cli_terminal_web_app.html)
 
