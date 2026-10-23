@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WU Changlin's GitHub Hub</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Fira Code & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: 'Fira Code', monospace;
+      background: radial-gradient(circle at 50% 20%, #1e1e2e 0%, #0f0f17 100%);
+      color: #cdd6f4;
+      min-height: 100vh;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #181825;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #45475a;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #585b70;
+    }
+
+    /* Terminal Blinking Cursor */
+    .cursor-blink {
+      display: inline-block;
+      width: 8px;
+      height: 18px;
+      background-color: #a6e3a1;
+      vertical-align: middle;
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Subtle Glow Effects */
+    .glow-green { text-shadow: 0 0 10px rgba(166, 227, 161, 0.4); }
+    .glow-blue { text-shadow: 0 0 10px rgba(137, 220, 235, 0.4); }
+    .glow-purple { text-shadow: 0 0 10px rgba(203, 166, 247, 0.4); }
+    
+    .terminal-window {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(137, 220, 235, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-center items-center min-h-screen p-3 sm:p-6 select-none sm:select-auto">
+
+  <!-- Main macOS Window Container -->
+  <div class="terminal-window w-full max-w-4xl bg-[#1e1e2e] rounded-xl overflow-hidden flex flex-col h-[88vh] max-h-[900px] transition-all duration-300">
+    
+    <!-- Window Header (macOS Title Bar) -->
+    <div class="bg-[#181825] px-4 py-3 flex items-center justify-between border-b border-[#313244] shrink-0">
+      <!-- Window Controls (Red, Yellow, Green Buttons) -->
+      <div class="flex items-center space-x-2 w-20">
+        <button id="btn-close" class="w-3.5 h-3.5 rounded-full bg-[#ff5f56] hover:bg-[#e0443e] flex items-center justify-center group transition" title="Close Window">
+          <i class="fa-solid fa-xmark text-[8px] text-[#4c0000] opacity-0 group-hover:opacity-100"></i>
+        </button>
+        <button id="btn-minimize" class="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] hover:bg-[#dea123] flex items-center justify-center group transition" title="Minimize">
+          <i class="fa-solid fa-minus text-[8px] text-[#5c4000] opacity-0 group-hover:opacity-100"></i>
+        </button>
+        <button id="btn-maximize" class="w-3.5 h-3.5 rounded-full bg-[#27c93f] hover:bg-[#1aab2d] flex items-center justify-center group transition" title="Maximize">
+          <i class="fa-solid fa-expand text-[7px] text-[#003800] opacity-0 group-hover:opacity-100"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center space-x-1 sm:space-x-2 text-xs overflow-x-auto no-scrollbar">
+        <button onclick="switchTab('home')" id="tab-home" class="tab-btn px-3 py-1 rounded-md bg-[#1e1e2e] text-[#cdd6f4] border border-[#313244] flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-terminal text-[#89dceb]"></i>
+          <span>index.sh</span>
+        </button>
+        <button onclick="switchTab('about')" id="tab-about" class="tab-btn px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-user text-[#a6e3a1]"></i>
+          <span>neofetch.sys</span>
+        </button>
+        <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-folder-open text-[#f9e2af]"></i>
+          <span>apps.json</span>
+        </button>
+      </div>
+
+      <!-- User Host Header info -->
+      <div class="hidden md:flex items-center text-xs text-[#6c7086] space-x-2 w-20 justify-end">
+        <span>zsh</span>
+        <i class="fa-solid fa-lock text-[10px]"></i>
+      </div>
+    </div>
+
+    <!-- Terminal Content Area -->
+    <div id="terminal-body" class="p-4 sm:p-6 overflow-y-auto flex-grow space-y-6 text-sm sm:text-base leading-relaxed">
+      
+      <!-- Welcome Line Prompt -->
+      <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+        <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+        <span class="text-[#6c7086]">:</span>
+        <span class="text-[#89b4fa] font-semibold">~</span>
+        <span class="text-[#cba6f7] font-semibold">$</span>
+        <span class="text-[#f5e0dc]">cat welcome_banner.txt</span>
+      </div>
+
+      <!-- Main Banner Card -->
+      <div class="bg-[#181825]/70 border border-[#313244] p-4 sm:p-5 rounded-lg space-y-3">
+        <div class="flex items-center justify-between">
+          <h1 class="text-xl sm:text-2xl font-bold text-[#89dceb] glow-blue flex items-center gap-2">
+            <i class="fa-solid fa-hand-wave text-[#f9e2af]"></i> Hello Visitor! :)
+          </h1>
+          <span class="text-xs px-2.5 py-1 bg-[#313244] text-[#a6e3a1] rounded-full border border-[#45475a] flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+            Online
+          </span>
+        </div>
+        <p class="text-[#bac2de]">
+          Welcome to <strong class="text-[#f5e0dc]">WU Changlin's GitHub Hub</strong>. Explore personal projects, system info, and interactive utilities built with code.
+        </p>
+        
+        <div class="pt-2 flex flex-wrap gap-3">
+          <a href="https://github.com/ChanglinWu" target="_blank" rel="noopener noreferrer" 
+             class="inline-flex items-center gap-2 px-4 py-2 bg-[#313244] hover:bg-[#45475a] text-[#cdd6f4] hover:text-[#89dceb] rounded-lg text-xs sm:text-sm font-medium border border-[#45475a] transition duration-200">
+            <i class="fa-brands fa-github text-base"></i>
+            <span>GitHub Profile</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-[#a6adc8]"></i>
+          </a>
+          
+          <button onclick="copyToClipboard('https://github.com/ChanglinWu', 'Profile URL copied!')" 
+                  class="inline-flex items-center gap-2 px-3 py-2 bg-[#181825] hover:bg-[#313244] text-[#a6adc8] hover:text-[#cdd6f4] rounded-lg text-xs sm:text-sm font-medium border border-[#313244] transition duration-200"
+                  title="Copy Profile URL">
+            <i class="fa-regular fa-copy"></i>
+            <span>Copy URL</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- System Info / Neofetch Output -->
+      <div id="section-neofetch" class="space-y-3">
+        <div class="flex items-center gap-2 text-xs sm:text-sm text-[#89b4fa]">
+          <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+          <span class="text-[#6c7086]">:</span>
+          <span class="text-[#89b4fa] font-semibold">~</span>
+          <span class="text-[#cba6f7] font-semibold">$</span>
+          <span class="text-[#f5e0dc]">neofetch --user changlin</span>
+        </div>
+
+        <div class="bg-[#181825]/90 border border-[#313244] rounded-lg p-4 sm:p-5 flex flex-col md:flex-row gap-6 items-start">
+          <!-- ASCII Logo Header -->
+          <div class="text-[#89dceb] font-mono text-xs leading-tight hidden sm:block select-none shrink-0">
+<pre class="text-[#cba6f7] font-bold">
+     .---.
+    /     \
+   | () () |  WU CHANGLIN
+    \  ^  /   ------------
+     |||||    DEVELOPER
+     '|||'
+</pre>
+          </div>
+
+          <!-- Neofetch Detail Table -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs sm:text-sm w-full">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-id-card text-[#cba6f7] w-4 text-center"></i>
+              <span class="text-[#a6adc8]">Name:</span>
+              <span class="font-semibold text-[#cdd6f4]">WU Changlin</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-[#f38ba8] w-4 text-center"></i>
+              <span class="text-[#a6adc8]">Birthplace:</span>
+              <span class="font-semibold text-[#cdd6f4]">CN (China)</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-star text-[#f9e2af] w-4 text-center"></i>
+              <span class="text-[#a6adc8]">Constellation:</span>
+              <span class="font-semibold text-[#cdd6f4]">Capricorn ♑</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-[#a6e3a1] w-4 text-center"></i>
+              <span class="text-[#a6adc8]">Shell:</span>
+              <span class="font-semibold text-[#cdd6f4]">zsh 5.9 (arm64-apple-darwin)</span>
+            </div>
+
+            <div class="flex items-center gap-2 sm:col-span-2">
+              <i class="fa-solid fa-earth-asia text-[#89dceb] w-4 text-center"></i>
+              <span class="text-[#a6adc8]">Motto:</span>
+              <span class="font-medium text-[#f5e0dc] italic">"Wish the best for the world!"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Python Code Execution Block -->
+      <div id="section-python" class="space-y-3">
+        <div class="flex items-center justify-between text-xs sm:text-sm">
+          <div class="flex items-center gap-2">
+            <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+            <span class="text-[#6c7086]">:</span>
+            <span class="text-[#89b4fa] font-semibold">~</span>
+            <span class="text-[#cba6f7] font-semibold">$</span>
+            <span class="text-[#f5e0dc]">python3 main.py</span>
+          </div>
+          <button onclick="runPythonDemo()" class="text-xs px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6e3a1] rounded border border-[#45475a] transition flex items-center gap-1">
+            <i class="fa-solid fa-play text-[10px]"></i> Run Code
+          </button>
+        </div>
+
+        <div class="bg-[#181825] border border-[#313244] rounded-lg overflow-hidden">
+          <div class="bg-[#11111b] px-4 py-2 border-b border-[#313244] flex items-center justify-between text-xs text-[#a6adc8]">
+            <span class="flex items-center gap-2">
+              <i class="fa-brands fa-python text-[#f9e2af]"></i> main.py
+            </span>
+            <span class="text-[10px] text-[#6c7086]">Python 3.11</span>
+          </div>
+          <div class="p-4 font-mono text-xs sm:text-sm overflow-x-auto">
+            <code class="text-[#f38ba8]">print<span class="text-[#cdd6f4]">(</span><span class="text-[#a6e3a1]">"Welcome to my GitHub page!"</span><span class="text-[#cdd6f4]">)</span></code>
+          </div>
+          <!-- Execution Output Console -->
+          <div id="python-output" class="px-4 py-3 bg-[#0d0e15] border-t border-[#313244] text-xs sm:text-sm text-[#a6e3a1] font-mono flex items-center gap-2">
+            <span class="text-[#6c7086]">&gt;</span>
+            <span id="py-output-text">Welcome to my GitHub page!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini-Apps / Projects Links Section -->
+      <div id="section-projects" class="space-y-3">
+        <div class="flex items-center gap-2 text-xs sm:text-sm">
+          <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+          <span class="text-[#6c7086]">:</span>
+          <span class="text-[#89b4fa] font-semibold">~</span>
+          <span class="text-[#cba6f7] font-semibold">$</span>
+          <span class="text-[#f5e0dc]">ls -la ./links/</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- App 1: Kowloon Tong Time -->
+          <a href="https://changlinwu.github.io/hko_cli_terminal_web_app.html" 
+             class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#89dceb] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-[#89dceb]/10 text-[#89dceb] flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-clock"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-[#6c7086] group-hover:text-[#89dceb] group-hover:translate-x-1 transition duration-200"></i>
+              </div>
+              <h3 class="font-bold text-[#cdd6f4] group-hover:text-[#89dceb] transition">Kowloon Tong Time</h3>
+              <p class="text-xs text-[#a6adc8] leading-relaxed">
+                Terminal-style web application for real-time Hong Kong Observatory time and weather updates.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-[#a6e3a1] font-mono">
+              <i class="fa-solid fa-terminal text-[10px]"></i>
+              <span>hko_cli_terminal_web_app</span>
+            </div>
+          </a>
+
+          <!-- App 2: Py3 practice -->
+          <a href="https://changlinwu.github.io/python_idle_online_teaching_platform.html" 
+             class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#f9e2af] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-[#f9e2af]/10 text-[#f9e2af] flex items-center justify-center font-bold text-sm">
+                  <i class="fa-brands fa-python"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-[#6c7086] group-hover:text-[#f9e2af] group-hover:translate-x-1 transition duration-200"></i>
+              </div>
+              <h3 class="font-bold text-[#cdd6f4] group-hover:text-[#f9e2af] transition">Py3 Practice</h3>
+              <p class="text-xs text-[#a6adc8] leading-relaxed">
+                Online Python IDLE and interactive teaching platform for Python 3 execution and learning.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-[#f9e2af] font-mono">
+              <i class="fa-solid fa-code text-[10px]"></i>
+              <span>python_idle_teaching</span>
+            </div>
+          </a>
+
+          <!-- App 3: Chat Board -->
+          <a href="https://changlinwu.github.io/100_zero_config_realtime_guestbook.html" 
+             class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#cba6f7] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-[#cba6f7]/10 text-[#cba6f7] flex items-center justify-center font-bold text-sm">
+                  <i class="fa-solid fa-comments"></i>
+                </div>
+                <i class="fa-solid fa-arrow-right text-[#6c7086] group-hover:text-[#cba6f7] group-hover:translate-x-1 transition duration-200"></i>
+              </div>
+              <h3 class="font-bold text-[#cdd6f4] group-hover:text-[#cba6f7] transition">Chat Board</h3>
+              <p class="text-xs text-[#a6adc8] leading-relaxed">
+                100% Zero-Config Realtime Guestbook & interactive visitor chatroom for messages.
+              </p>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] text-[#cba6f7] font-mono">
+              <i class="fa-solid fa-message text-[10px]"></i>
+              <span>realtime_guestbook</span>
+            </div>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Dynamic Command Output Log (For CLI Interactions) -->
+      <div id="cli-output-log" class="space-y-3"></div>
+
+    </div>
+
+    <!-- Quick Command Pill Bar -->
+    <div class="bg-[#181825] px-4 py-2 border-t border-[#313244] flex items-center gap-2 overflow-x-auto text-xs shrink-0 no-scrollbar">
+      <span class="text-[#6c7086] font-semibold text-[11px] uppercase tracking-wider shrink-0">Quick Cmds:</span>
+      <button onclick="executeCommand('help')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89dceb] rounded transition shrink-0">help</button>
+      <button onclick="executeCommand('projects')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f9e2af] rounded transition shrink-0">projects</button>
+      <button onclick="executeCommand('neofetch')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6e3a1] rounded transition shrink-0">neofetch</button>
+      <button onclick="executeCommand('github')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#cba6f7] rounded transition shrink-0">github</button>
+      <button onclick="executeCommand('date')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f38ba8] rounded transition shrink-0">date</button>
+      <button onclick="executeCommand('clear')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6adc8] rounded transition shrink-0">clear</button>
+    </div>
+
+    <!-- Interactive Terminal Command Prompt Footer -->
+    <div class="bg-[#11111b] px-4 py-3 border-t border-[#313244] flex items-center gap-2 shrink-0">
+      <div class="flex items-center gap-1.5 text-xs sm:text-sm shrink-0">
+        <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+        <span class="text-[#6c7086]">:</span>
+        <span class="text-[#89b4fa] font-semibold">~</span>
+        <span class="text-[#cba6f7] font-semibold">$</span>
+      </div>
+      <input type="text" id="terminal-input" 
+             class="bg-transparent border-none outline-none text-[#cdd6f4] text-xs sm:text-sm font-mono w-full focus:ring-0 placeholder-[#585b70]"
+             placeholder="Type 'help' or click a command pill above..."
+             autocomplete="off" spellcheck="false">
+      <span class="cursor-blink shrink-0"></span>
+    </div>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-[#313244] text-[#cdd6f4] px-4 py-2.5 rounded-lg border border-[#45475a] shadow-xl text-xs sm:text-sm opacity-0 pointer-events-none transition-opacity duration-300 flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-[#a6e3a1]"></i>
+    <span id="toast-message">Notification</span>
+  </div>
+
+  <script>
+    const inputField = document.getElementById('terminal-input');
+    const terminalBody = document.getElementById('terminal-body');
+    const cliLog = document.getElementById('cli-output-log');
+
+    // Focus input on click anywhere on terminal body
+    terminalBody.addEventListener('click', () => {
+      inputField.focus();
+    });
+
+    // Keyboard listener for command execution
+    inputField.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const command = inputField.value.trim();
+        if (command) {
+          executeCommand(command);
+          inputField.value = '';
+        }
+      }
+    });
+
+    // Command Interpreter
+    function executeCommand(cmd) {
+      const lowerCmd = cmd.toLowerCase().trim();
+
+      // Create command prompt line log
+      const logItem = document.createElement('div');
+      logItem.className = 'space-y-2 my-3';
+
+      const promptLine = document.createElement('div');
+      promptLine.className = 'flex items-center gap-2 text-xs sm:text-sm';
+      promptLine.innerHTML = `
+        <span class="text-[#a6e3a1] font-semibold">changlin@macbook</span>
+        <span class="text-[#6c7086]">:</span>
+        <span class="text-[#89b4fa] font-semibold">~</span>
+        <span class="text-[#cba6f7] font-semibold">$</span>
+        <span class="text-[#f5e0dc]">${escapeHTML(cmd)}</span>
+      `;
+      logItem.appendChild(promptLine);
+
+      const response = document.createElement('div');
+      response.className = 'text-xs sm:text-sm text-[#cdd6f4] pl-2 border-l-2 border-[#313244]';
+
+      switch (lowerCmd) {
+        case 'help':
+          response.innerHTML = `
+            <div class="space-y-1 py-1 text-[#bac2de]">
+              <p class="text-[#89dceb] font-semibold">Available Commands:</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                <div><span class="text-[#a6e3a1] font-mono">projects</span> / <span class="text-[#a6e3a1] font-mono">ls</span> : List mini-apps</div>
+                <div><span class="text-[#a6e3a1] font-mono">neofetch</span> / <span class="text-[#a6e3a1] font-mono">about</span> : Display system info</div>
+                <div><span class="text-[#a6e3a1] font-mono">github</span> : Open GitHub Profile</div>
+                <div><span class="text-[#a6e3a1] font-mono">python</span> : Run Python script sample</div>
+                <div><span class="text-[#a6e3a1] font-mono">quote</span> : Display favorite motto</div>
+                <div><span class="text-[#a6e3a1] font-mono">date</span> : Show current system time</div>
+                <div><span class="text-[#a6e3a1] font-mono">clear</span> : Clear terminal history</div>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'projects':
+        case 'ls':
+          response.innerHTML = `
+            <div class="py-1 space-y-2 text-xs">
+              <p class="text-[#f9e2af] font-semibold">Hosted Applications:</p>
+              <ul class="space-y-1.5 font-mono">
+                <li>1. <a href="https://changlinwu.github.io/hko_cli_terminal_web_app.html" target="_blank" class="text-[#89dceb] hover:underline">Kowloon Tong Time</a> - HK Observatory CLI App</li>
+                <li>2. <a href="https://changlinwu.github.io/python_idle_online_teaching_platform.html" target="_blank" class="text-[#f9e2af] hover:underline">Py3 Practice</a> - Online Python IDLE Platform</li>
+                <li>3. <a href="https://changlinwu.github.io/100_zero_config_realtime_guestbook.html" target="_blank" class="text-[#cba6f7] hover:underline">Chat Board</a> - 100% Realtime Guestbook</li>
+              </ul>
+            </div>
+          `;
+          break;
+
+        case 'neofetch':
+        case 'about':
+          document.getElementById('section-neofetch').scrollIntoView({ behavior: 'smooth' });
+          response.innerHTML = `<span class="text-[#a6e3a1]">Scrolled to neofetch details card above.</span>`;
+          break;
+
+        case 'github':
+          window.open('https://github.com/ChanglinWu', '_blank');
+          response.innerHTML = `<span class="text-[#89dceb]">Opening https://github.com/ChanglinWu in a new tab...</span>`;
+          break;
+
+        case 'python':
+        case 'python3':
+          runPythonDemo();
+          response.innerHTML = `<span class="text-[#a6e3a1]">Executed main.py block above!</span>`;
+          break;
+
+        case 'quote':
+          response.innerHTML = `<span class="text-[#f5e0dc] italic">"Wish the best for the world!"</span>`;
+          break;
+
+        case 'date':
+          const now = new Date();
+          response.innerHTML = `<span class="text-[#f38ba8]">${now.toString()}</span>`;
+          break;
+
+        case 'clear':
+          cliLog.innerHTML = '';
+          showToast("Terminal screen cleared");
+          return;
+
+        default:
+          response.innerHTML = `<span class="text-[#f38ba8]">zsh: command not found: ${escapeHTML(cmd)}. Type '<span class="text-[#89dceb]">help</span>' for available options.</span>`;
+          break;
+      }
+
+      logItem.appendChild(response);
+      cliLog.appendChild(logItem);
+
+      // Auto scroll to bottom
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    // Switch Tabs Logic
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-[#1e1e2e]', 'text-[#cdd6f4]', 'border', 'border-[#313244]');
+        btn.classList.add('text-[#a6adc8]');
+      });
+
+      const targetTab = document.getElementById(`tab-${tab}`);
+      if (targetTab) {
+        targetTab.classList.add('bg-[#1e1e2e]', 'text-[#cdd6f4]', 'border', 'border-[#313244]');
+        targetTab.classList.remove('text-[#a6adc8]');
+      }
+
+      if (tab === 'home') {
+        terminalBody.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (tab === 'about') {
+        document.getElementById('section-neofetch').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'projects') {
+        document.getElementById('section-projects').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Python Execution Simulation
+    function runPythonDemo() {
+      const outputText = document.getElementById('py-output-text');
+      outputText.innerHTML = '<span class="animate-pulse text-[#f9e2af]">Executing...</span>';
+      setTimeout(() => {
+        outputText.innerHTML = 'Welcome to my GitHub page!';
+        showToast("Python script executed successfully!");
+      }, 400);
+    }
+
+    // Copy to Clipboard Utility
+    function copyToClipboard(text, message) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(message || "Copied to clipboard!");
+      } catch (err) {
+        showToast("Failed to copy");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    // Toast Notification Display
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // Escape HTML Helper
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    // Window control buttons feedback
+    document.getElementById('btn-close').addEventListener('click', () => {
+      showToast("macOS Terminal session active");
+    });
+    document.getElementById('btn-minimize').addEventListener('click', () => {
+      showToast("Minimized terminal buffer");
+    });
+    document.getElementById('btn-maximize').addEventListener('click', () => {
+      showToast("Terminal window maximized");
+    });
+  </script>
+</body>
+</html>
