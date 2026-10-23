@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guestbook Terminal - ChanglinWu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fira Code & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"Fira Code"', 'Consolas', 'Monaco', 'monospace'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        cat: {
+                            base: '#1e1e2e',
+                            mantle: '#181825',
+                            crust: '#11111b',
+                            surface: '#313244',
+                            overlay: '#45475a',
+                            text: '#cdd6f4',
+                            subtext: '#a6adc8',
+                            green: '#a6e3a1',
+                            teal: '#94e2d5',
+                            blue: '#89b4fa',
+                            mauve: '#cba6f7',
+                            red: '#f38ba8',
+                            yellow: '#f9e2af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #11111b;
+            color: #cdd6f4;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* macOS Glass Window Effect */
+        .mac-window {
+            background-color: rgba(30, 30, 46, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(69, 71, 90, 0.6);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #181825;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #45475a;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #585b70;
+        }
+
+        /* Utterances Dark Theme Fit */
+        .utterances {
+            max-width: 100% !important;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor-blink {
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 sm:p-6 flex flex-col justify-between items-center custom-scrollbar selection:bg-cat-mauve selection:text-cat-crust">
+
+    <!-- Top Floating Quick Header -->
+    <header class="w-full max-w-4xl mb-4 flex items-center justify-between text-xs text-cat-subtext">
+        <div class="flex items-center gap-2">
+            <i class="fa-brands fa-github text-base text-cat-text"></i>
+            <span>Repo: <strong class="text-cat-teal">ChanglinWu/ChanglinWu.github.io</strong></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues" target="_blank" rel="noopener noreferrer" 
+               class="hover:text-cat-mauve transition flex items-center gap-1">
+               <i class="fa-solid fa-arrow-up-right-from-square"></i> GitHub Issues 网页版
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Terminal Container -->
+    <div class="mac-window w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col my-auto border border-cat-overlay">
+        
+        <!-- macOS Terminal Header / Window Controls -->
+        <div class="bg-cat-mantle px-4 py-3 border-b border-cat-surface flex items-center justify-between select-none">
+            <div class="flex items-center space-x-2">
+                <!-- Red / Yellow / Green Window Controls -->
+                <button class="w-3.5 h-3.5 rounded-full bg-cat-red hover:opacity-80 transition flex items-center justify-center group" title="Close">
+                    <i class="fa-solid fa-xmark text-[8px] text-cat-crust opacity-0 group-hover:opacity-100"></i>
+                </button>
+                <button class="w-3.5 h-3.5 rounded-full bg-cat-yellow hover:opacity-80 transition flex items-center justify-center group" title="Minimize">
+                    <i class="fa-solid fa-minus text-[8px] text-cat-crust opacity-0 group-hover:opacity-100"></i>
+                </button>
+                <button class="w-3.5 h-3.5 rounded-full bg-cat-green hover:opacity-80 transition flex items-center justify-center group" title="Expand">
+                    <i class="fa-solid fa-expand text-[8px] text-cat-crust opacity-0 group-hover:opacity-100"></i>
+                </button>
+            </div>
+
+            <!-- Terminal Title -->
+            <div class="text-xs font-semibold text-cat-subtext flex items-center gap-2">
+                <i class="fa-solid fa-terminal text-cat-green"></i>
+                <span>changlinwu@macbook-pro: ~/guestbook.sh</span>
+            </div>
+
+            <!-- Right Status Badge -->
+            <div class="flex items-center gap-2 text-[11px] text-cat-subtext">
+                <span class="inline-block w-2 h-2 rounded-full bg-cat-green"></span>
+                <span class="hidden sm:inline">Backend: Issues API</span>
+            </div>
+        </div>
+
+        <!-- Terminal Body Area -->
+        <div class="p-4 sm:p-6 space-y-6">
+
+            <!-- Banner / CLI Prompt -->
+            <div class="space-y-2 bg-cat-mantle p-4 rounded-xl border border-cat-surface">
+                <div class="flex items-center text-xs text-cat-subtext">
+                    <span class="text-cat-green font-bold mr-2">guestbook@localhost:~$</span>
+                    <span>./fetch_comments.sh --repo=ChanglinWu/ChanglinWu.github.io</span>
+                </div>
+                <h1 class="text-lg sm:text-xl font-bold text-cat-mauve flex items-center gap-2 pt-1">
+                    💬 极客命令行留言板
+                </h1>
+                <p class="text-xs text-cat-subtext leading-relaxed font-sans">
+                    留言数据直接与 GitHub Repo 的 Issues 数据库无缝互通。你可以直接通过下方 Utterances 表单发表评论，也可以直接跳转到 GitHub 发起新 Issue！
+                </p>
+                
+                <!-- Quick Actions Bar -->
+                <div class="pt-2 flex flex-wrap items-center gap-2">
+                    <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues/new" target="_blank" rel="noopener noreferrer" 
+                       class="bg-cat-mauve hover:bg-opacity-90 text-cat-crust font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-plus"></i> 在 GitHub 新建 Issue
+                    </a>
+                    <button onclick="fetchIssuesFromGitHub()" class="bg-cat-surface hover:bg-cat-overlay text-cat-text px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition">
+                        <i id="sync-icon" class="fa-solid fa-rotate"></i> 刷新 Issue 列表
+                    </button>
+                    <button onclick="toggleSetupGuide()" class="bg-cat-surface hover:bg-cat-overlay text-cat-teal px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition ml-auto">
+                        <i class="fa-solid fa-circle-info"></i> 配置说明/授权教程
+                    </button>
+                </div>
+            </div>
+
+            <!-- Setup Guide Collapsible Panel (Hidden by Default) -->
+            <div id="setup-guide" class="hidden bg-cat-mantle rounded-xl p-4 border border-cat-teal/30 space-y-3 text-xs">
+                <div class="flex items-center justify-between text-cat-teal font-bold border-b border-cat-surface pb-2">
+                    <span><i class="fa-solid fa-sliders"></i> Utterances 挂件启用 3 步指南</span>
+                    <button onclick="toggleSetupGuide()" class="text-cat-subtext hover:text-cat-text"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <ol class="list-decimal list-inside space-y-2 text-cat-subtext font-sans">
+                    <li><strong class="text-cat-text">开启 Issues 功能：</strong> 确保 Repository <code class="bg-cat-surface text-cat-mauve px-1 rounded">ChanglinWu/ChanglinWu.github.io</code> 已经设置为 <strong>Public (公开)</strong> 并在设置中勾选开启了 <strong>Issues</strong>。</li>
+                    <li><strong class="text-cat-text">授权 Utterances App：</strong> 访问 <a href="https://github.com/apps/utterances" target="_blank" class="text-cat-blue underline">github.com/apps/utterances</a>，点击 <strong>Install</strong>，并授予访问 <code class="bg-cat-surface text-cat-mauve px-1 rounded">ChanglinWu.github.io</code> 仓库的权限。</li>
+                    <li><strong class="text-cat-text">完成！</strong> 刷新本页面即可使用下方 Utterances 留言框直接用 GitHub 账号发表评论。</li>
+                </ol>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-cat-surface text-xs font-semibold">
+                <button id="tab-issues-btn" onclick="switchTab('issues')" class="px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition">
+                    <i class="fa-solid fa-list-check"></i> GitHub Issues 列表 (<span id="issues-count">0</span>)
+                </button>
+                <button id="tab-utterances-btn" onclick="switchTab('utterances')" class="px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition">
+                    <i class="fa-solid fa-comments"></i> 发表留言 (Utterances 嵌入框)
+                </button>
+            </div>
+
+            <!-- Tab 1: Real-time REST API GitHub Issues Feed -->
+            <section id="tab-issues" class="space-y-4">
+                <div id="issues-list" class="space-y-3">
+                    <!-- Loading state -->
+                    <div id="loading-spinner" class="text-center py-10 text-cat-subtext space-y-2">
+                        <i class="fa-solid fa-circle-notch fa-spin text-2xl text-cat-mauve"></i>
+                        <p class="text-xs">正在通过 API 实时读取 GitHub Issues 数据...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Utterances Comment Box Widget Container -->
+            <section id="tab-utterances" class="hidden space-y-4">
+                <div class="bg-cat-mantle p-3 rounded-xl border border-cat-surface text-xs text-cat-subtext flex items-center justify-between">
+                    <span><i class="fa-regular fa-lightbulb text-cat-yellow"></i> 留言将以讨论形式提交至你的仓库 Issues。</span>
+                    <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues" target="_blank" class="text-cat-blue hover:underline">去 GitHub 查看全部</a>
+                </div>
+                <!-- Utterances iframe container -->
+                <div id="utterances-container" class="bg-cat-mantle p-4 rounded-xl border border-cat-surface min-h-[250px]">
+                    <!-- Dynamic Utterances script will load here -->
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Terminal Footer Bar -->
+        <div class="bg-cat-mantle px-4 py-2.5 border-t border-cat-surface flex flex-col sm:flex-row items-center justify-between text-[11px] text-cat-subtext gap-2">
+            <div class="flex items-center gap-2 font-mono">
+                <span class="text-cat-mauve">➜</span>
+                <span>status: <span class="text-cat-green">200 OK</span></span>
+                <span class="text-cat-surface">|</span>
+                <span id="last-updated">更新于: -</span>
+            </div>
+            <div class="flex items-center gap-3 font-sans">
+                <span>Made for <a href="https://github.com/ChanglinWu" target="_blank" class="text-cat-teal hover:underline font-mono">ChanglinWu</a></span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification Message Container -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-cat-mauve text-cat-crust font-semibold px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 transition-all duration-300 transform translate-y-12 opacity-0 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">提示消息</span>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        const REPO_OWNER = 'ChanglinWu';
+        const REPO_NAME = 'ChanglinWu.github.io';
+        const FULL_REPO = `${REPO_OWNER}/${REPO_NAME}`;
+
+        let loadedIssues = [];
+        let utterancesLoaded = false;
+
+        // On Page Load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchIssuesFromGitHub();
+        });
+
+        // Tab Switching Function
+        function switchTab(tabName) {
+            const issuesTab = document.getElementById('tab-issues');
+            const utterancesTab = document.getElementById('tab-utterances');
+            const issuesBtn = document.getElementById('tab-issues-btn');
+            const utterancesBtn = document.getElementById('tab-utterances-btn');
+
+            if (tabName === 'issues') {
+                issuesTab.classList.remove('hidden');
+                utterancesTab.classList.add('hidden');
+                
+                issuesBtn.className = "px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition";
+                utterancesBtn.className = "px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition";
+            } else {
+                issuesTab.classList.add('hidden');
+                utterancesTab.classList.remove('hidden');
+
+                utterancesBtn.className = "px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition";
+                issuesBtn.className = "px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition";
+
+                if (!utterancesLoaded) {
+                    loadUtterancesWidget();
+                }
+            }
+        }
+
+        // Toggle Setup Guide
+        function toggleSetupGuide() {
+            const guide = document.getElementById('setup-guide');
+            guide.classList.toggle('hidden');
+        }
+
+        // Load Utterances Dynamic Embed
+        function loadUtterancesWidget() {
+            const container = document.getElementById('utterances-container');
+            container.innerHTML = ''; // clear
+
+            const script = document.createElement('script');
+            script.src = 'https://utteranc.es/client.js';
+            script.setAttribute('repo', FULL_REPO);
+            script.setAttribute('issue-term', 'title');
+            script.setAttribute('theme', 'github-dark');
+            script.setAttribute('crossorigin', 'anonymous');
+            script.async = true;
+
+            container.appendChild(script);
+            utterancesLoaded = true;
+        }
+
+        // Fetch Issues using GitHub REST API
+        async function fetchIssuesFromGitHub() {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.add('fa-spin');
+
+            const container = document.getElementById('issues-list');
+            container.innerHTML = `
+                <div class="text-center py-10 text-cat-subtext space-y-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl text-cat-mauve"></i>
+                    <p class="text-xs">正在请求 api.github.com/repos/${FULL_REPO}/issues...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`https://api.github.com/repos/${FULL_REPO}/issues?state=all&per_page=15`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error(`仓库不存在或 Issues 功能未开启 (${response.status})`);
+                    }
+                    throw new Error(`GitHub API 响应错误 (${response.status})`);
+                }
+
+                const data = await response.json();
+                // Filter out Pull Requests
+                loadedIssues = data.filter(item => !item.pull_request);
+
+                renderIssues(loadedIssues);
+                document.getElementById('issues-count').innerText = loadedIssues.length;
+                document.getElementById('last-updated').innerText = `更新于: ${new Date().toLocaleTimeString()}`;
+                
+                showToast('已同步最新 GitHub Issues 数据');
+            } catch (err) {
+                console.error("API Fetch Error:", err);
+                container.innerHTML = `
+                    <div class="bg-cat-mantle rounded-xl p-6 border border-cat-red/40 text-center space-y-3">
+                        <i class="fa-solid fa-triangle-exclamation text-cat-red text-2xl"></i>
+                        <h3 class="text-sm font-bold text-cat-text">无法获取 Issues 数据</h3>
+                        <p class="text-xs text-cat-subtext font-sans">${escapeHtml(err.message)}</p>
+                        <div class="pt-2">
+                            <button onclick="toggleSetupGuide()" class="bg-cat-surface hover:bg-cat-overlay text-cat-teal text-xs px-3 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-wrench"></i> 查看检查与设置指南
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // Render Issue Preview Cards
+        function renderIssues(issues) {
+            const container = document.getElementById('issues-list');
+
+            if (!issues || issues.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-cat-mantle rounded-xl p-8 text-center text-cat-subtext space-y-3 border border-cat-surface">
+                        <i class="fa-regular fa-folder-open text-3xl text-cat-overlay"></i>
+                        <p class="text-xs font-sans">当前 Repository 暂无任何 Issue 留言。</p>
+                        <a href="https://github.com/${FULL_REPO}/issues/new" target="_blank" 
+                           class="inline-block bg-cat-mauve text-cat-crust font-semibold px-4 py-1.5 rounded-lg text-xs transition hover:opacity-90">
+                           成为第一个发表留言的人
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = issues.map(issue => {
+                const isClosed = issue.state === 'closed';
+                const statusBg = isClosed ? 'bg-cat-purple/20 text-cat-mauve border-cat-mauve/40' : 'bg-cat-green/20 text-cat-green border-cat-green/40';
+                const statusIcon = isClosed ? 'fa-regular fa-circle-check' : 'fa-regular fa-circle-dot';
+                
+                const createdDate = new Date(issue.created_at).toLocaleDateString('zh-CN', {
+                    year: 'numeric', month: '2-digit', day: '2-digit'
+                });
+
+                // Body text snippet preview
+                const bodySnippet = issue.body 
+                    ? escapeHtml(issue.body.slice(0, 180)) + (issue.body.length > 180 ? '...' : '')
+                    : '<em class="text-cat-overlay">无详细描述内容</em>';
+
+                // Labels HTML
+                const labelsHtml = (issue.labels || []).map(lbl => `
+                    <span class="text-[10px] px-2 py-0.5 rounded-full border border-cat-surface text-cat-subtext" style="background-color: #${lbl.color}15">
+                        #${escapeHtml(lbl.name)}
+                    </span>
+                `).join('');
+
+                return `
+                    <div class="bg-cat-mantle hover:bg-cat-base rounded-xl p-4 border border-cat-surface hover:border-cat-overlay transition space-y-3">
+                        
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <img src="${issue.user.avatar_url}" alt="${escapeHtml(issue.user.login)}" class="w-7 h-7 rounded-full border border-cat-surface">
+                                <div class="truncate">
+                                    <a href="${issue.html_url}" target="_blank" class="text-sm font-bold text-cat-text hover:text-cat-mauve transition truncate inline-block">
+                                        #${issue.number} ${escapeHtml(issue.title)}
+                                    </a>
+                                    <div class="text-[11px] text-cat-subtext flex items-center gap-2">
+                                        <span>@${escapeHtml(issue.user.login)}</span>
+                                        <span>•</span>
+                                        <span>${createdDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <span class="text-[10px] px-2.5 py-1 rounded-full border font-semibold flex items-center gap-1 shrink-0 ${statusBg}">
+                                <i class="${statusIcon}"></i> ${issue.state.toUpperCase()}
+                            </span>
+                        </div>
+
+                        <!-- Card Body Preview -->
+                        <div class="text-xs text-cat-subtext leading-relaxed font-sans bg-cat-crust/50 p-3 rounded-lg border border-cat-surface/50 whitespace-pre-wrap break-words">
+                            ${bodySnippet}
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="flex items-center justify-between text-xs pt-1">
+                            <div class="flex flex-wrap gap-1.5 items-center">
+                                ${labelsHtml}
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 text-cat-subtext">
+                                <a href="${issue.html_url}" target="_blank" class="hover:text-cat-mauve transition flex items-center gap-1 text-xs">
+                                    <i class="fa-regular fa-comment"></i>
+                                    <span>${issue.comments} 条回复</span>
+                                </a>
+                                <a href="${issue.html_url}" target="_blank" class="text-cat-teal hover:underline text-xs flex items-center gap-1">
+                                    <span>查看 Issue</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show Toast Notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            toastMsg.innerText = msg;
+
+            toast.classList.remove('translate-y-12', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-12', 'opacity-0');
+            }, 3000);
+        }
+
+        // Utility: HTML Sanitizer
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
+```
+
+---
+
+### 🌟 这个重构版的主要改进：
+
+1. **GitHub API 实时预览卡片**：直接抓取 `ChanglinWu/ChanglinWu.github.io` 的 Issues 列表，实时展示评论者头像、Issue 标题、正文摘要、评论条数、Label 标签以及 Open/Closed 状态。
+2. **集成 Utterances 原生评论组件**：内置无缝调用的 Utterances 框架，适配暗色 `github-dark` 风格，用户可以在网页上用 GitHub 账号直接留言。
+3. **macOS Catppuccin Terminal 极客视觉**：高颜值的红黄绿窗口控制按钮、终端 Prompt 命令行输入展示，带有可收起/展开的 **3 步配置指南**。
+4. **直达 GitHub 新建按钮**：点击 **“在 GitHub 新建 Issue”** 会自动带用户跳转到你的 `ChanglinWu/ChanglinWu.github.io/issues/new` 提交新话题。
