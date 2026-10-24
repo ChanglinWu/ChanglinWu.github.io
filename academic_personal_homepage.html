@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dr. Alex H. Zhao | Academic Personal Homepage</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            academic: {
+              50: '#f0f4f8',
+              100: '#d9e2ec',
+              500: '#3b82f6',
+              800: '#1e3a8a',
+              900: '#0f172a',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Merriweather', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Modal transition styling */
+    .modal-backdrop {
+      background-rgba: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
+
+  <!-- Floating Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border border-slate-700 dark:border-slate-300 pointer-events-none">
+    <svg class="w-5 h-5 text-emerald-400 dark:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toast-message" class="text-sm font-medium">Copied to clipboard!</span>
+  </div>
+
+  <!-- Sticky Top Navigation Bar -->
+  <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-800 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Logo / Name Title -->
+      <a href="#about" class="flex items-center space-x-2 group">
+        <span class="w-8 h-8 rounded-lg bg-indigo-900 dark:bg-indigo-600 text-white flex items-center justify-center font-bold font-serif text-lg shadow-sm group-hover:scale-105 transition-transform">
+          A
+        </span>
+        <div class="flex flex-col">
+          <span class="font-serif font-bold text-slate-900 dark:text-white text-base leading-tight">Alex H. Zhao</span>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Researcher @ Stanford AI Lab</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center space-x-1 lg:space-x-6 text-sm font-medium">
+        <a href="#about" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">About</a>
+        <a href="#research" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">Research</a>
+        <a href="#news" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">News</a>
+        <a href="#publications" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">Publications</a>
+        <a href="#teaching" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">Teaching & Service</a>
+        <a href="#awards" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">Awards</a>
+        <a href="#contact" class="nav-link text-slate-600 hover:text-indigo-900 dark:text-slate-300 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">Contact</a>
+      </nav>
+
+      <!-- Right Action Controls (Dark Mode Toggle & Mobile Menu) -->
+      <div class="flex items-center space-x-3">
+        <!-- Theme Switcher Button -->
+        <button id="theme-toggle" aria-label="Toggle Theme" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+          <!-- Sun Icon -->
+          <svg id="sun-icon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <!-- Moon Icon -->
+          <svg id="moon-icon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobile-menu-btn" aria-label="Toggle Navigation Menu" class="md:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
+      <a href="#about" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">About</a>
+      <a href="#research" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Research</a>
+      <a href="#news" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">News</a>
+      <a href="#publications" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Publications</a>
+      <a href="#teaching" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Teaching & Service</a>
+      <a href="#awards" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Awards</a>
+      <a href="#contact" class="mobile-link block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">Contact</a>
+    </div>
+  </header>
+
+  <!-- Main Container Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+      
+      <!-- ================= SIDEBAR PROFILE SUMMARY CARD ================= -->
+      <aside class="lg:col-span-4">
+        <div class="lg:sticky lg:top-24 space-y-6 bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all">
+          
+          <!-- Profile Avatar & Status -->
+          <div class="flex flex-col items-center text-center">
+            <div class="relative mb-4 group">
+              <!-- Avatar Circle -->
+              <div class="w-36 h-36 rounded-full overflow-hidden ring-4 ring-slate-100 dark:ring-slate-700 shadow-md bg-gradient-to-tr from-indigo-900 to-blue-600 flex items-center justify-center text-white text-4xl font-serif font-bold">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" alt="Dr. Alex Zhao" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='https://placehold.co/400x400/1e3a8a/ffffff?text=AZ';">
+              </div>
+              <span class="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full" title="Currently open for collaboration"></span>
+            </div>
+
+            <!-- Identity Information -->
+            <h1 class="text-2xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">Dr. Alex H. Zhao</h1>
+            <p class="text-sm font-semibold text-indigo-800 dark:text-indigo-400 mt-1">Postdoctoral Senior Researcher</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Stanford Artificial Intelligence Laboratory (SAIL)</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center justify-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span>Stanford, CA, USA</span>
+            </p>
+          </div>
+
+          <!-- Academic Metrics Summary Grid -->
+          <div class="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 dark:border-slate-700/60 text-center">
+            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+              <span class="block text-lg font-bold text-slate-900 dark:text-slate-100">2,450+</span>
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Citations</span>
+            </div>
+            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+              <span class="block text-lg font-bold text-slate-900 dark:text-slate-100">18</span>
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">h-index</span>
+            </div>
+            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50">
+              <span class="block text-lg font-bold text-slate-900 dark:text-slate-100">24</span>
+              <span class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Papers</span>
+            </div>
+          </div>
+
+          <!-- Quick Elevator Bio Pitch -->
+          <div class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p>Focusing on foundational multimodality, robust machine learning, and scientific discovery AI. Ph.D. in CS from MIT ('23).</p>
+          </div>
+
+          <!-- Quick Contact & Social Academic Buttons -->
+          <div class="space-y-2">
+            <a href="javascript:void(0)" onclick="copyToClipboard('alex.zhao@stanford.edu', 'Email copied!')" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white font-medium text-xs hover:bg-slate-800 dark:hover:bg-indigo-500 shadow-sm transition-all group">
+              <svg class="w-4 h-4 text-slate-300 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              <span>alex.zhao@stanford.edu</span>
+            </a>
+
+            <a href="#cv-modal" onclick="showCvToast()" class="w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-medium text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+              <svg class="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>Download Curriculum Vitae (PDF)</span>
+            </a>
+          </div>
+
+          <!-- Academic Social Icons Row -->
+          <div class="pt-2 flex items-center justify-center space-x-3 text-slate-500 dark:text-slate-400">
+            <!-- Google Scholar -->
+            <a href="https://scholar.google.com" target="_blank" rel="noopener" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-900 dark:hover:text-indigo-400 transition-colors" title="Google Scholar">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 24a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-24L0 9.5l4.8 3.84V18h2.4v-3.36l4.8 3.84 9.6-7.68V18h2.4V9.5L12 0z"/></svg>
+            </a>
+            <!-- GitHub -->
+            <a href="https://github.com" target="_blank" rel="noopener" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-900 dark:hover:text-indigo-400 transition-colors" title="GitHub">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>
+            <!-- ORCID -->
+            <a href="https://orcid.org" target="_blank" rel="noopener" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-900 dark:hover:text-indigo-400 transition-colors" title="ORCID">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c2.259 0 3.834-1.428 3.834-3.722 0-2.141-1.428-3.722-3.722-3.722h-2.409z"/></svg>
+            </a>
+            <!-- X / Twitter -->
+            <a href="https://twitter.com" target="_blank" rel="noopener" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-900 dark:hover:text-indigo-400 transition-colors" title="Twitter / X">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <!-- Semantic Scholar -->
+            <a href="https://semanticscholar.org" target="_blank" rel="noopener" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-indigo-900 dark:hover:text-indigo-400 transition-colors" title="Semantic Scholar">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </a>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- ================= MAIN CONTENT AREA ================= -->
+      <div class="lg:col-span-8 space-y-16">
+
+        <!-- SECTION 1: ABOUT ME -->
+        <section id="about" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Biography & Overview</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 01</span>
+          </div>
+
+          <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 text-base">
+            <p>
+              I am a Postdoctoral Researcher in the <a href="#" class="text-indigo-800 dark:text-indigo-400 font-medium underline underline-offset-4 hover:text-indigo-600">Stanford Artificial Intelligence Laboratory (SAIL)</a>, working alongside Prof. Ellen Vance. Previously, I completed my Ph.D. in Computer Science at MIT, where I was advised by Prof. Marcus Sterling and supported by an NSF Graduate Research Fellowship.
+            </p>
+            <p>
+              My primary research interest lies at the intersection of <strong>Multimodal Machine Learning</strong>, <strong>Generative Representation Learning</strong>, and <strong>AI for Scientific Discovery</strong>. I aim to construct trustworthy foundational algorithms capable of reasoning seamlessly across diverse visual, textual, and structured biological modalities.
+            </p>
+            <p>
+              My work has received Best Paper Honorable Mention at NeurIPS 2024 and an Oral presentation at CVPR 2025. I am actively seeking collaborative interdisciplinary projects involving foundation models for chemistry and physics.
+            </p>
+          </div>
+
+          <!-- Highlight Cards Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div class="p-4 rounded-xl bg-indigo-50/60 dark:bg-slate-800/50 border border-indigo-100 dark:border-slate-700/60 flex items-start space-x-3">
+              <div class="p-2 rounded-lg bg-indigo-800 text-white dark:bg-indigo-500 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-slate-900 dark:text-white text-sm">Lab & Office Location</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gates Computer Science Building, Room 342, Stanford University</p>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-indigo-50/60 dark:bg-slate-800/50 border border-indigo-100 dark:border-slate-700/60 flex items-start space-x-3">
+              <div class="p-2 rounded-lg bg-indigo-800 text-white dark:bg-indigo-500 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+              </div>
+              <div>
+                <h3 class="font-semibold text-slate-900 dark:text-white text-sm">Prospective Students</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Looking for motivated Master's and PhD interns for Fall 2026/2027. Send an email with your CV.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 2: RESEARCH INTERESTS -->
+        <section id="research" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Research Domains</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 02</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Research Domain 1 -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all group">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif">Multimodal Foundation Models</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Developing unified architectures for cross-modal text-image-audio representations, focusing on self-supervised alignment and zero-shot transfer capabilities.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Vision-Language</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Alignment</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Transformers</span>
+              </div>
+            </div>
+
+            <!-- Research Domain 2 -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all group">
+              <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif">AI for Scientific Discovery</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Applying geometric deep learning and diffusion models to protein structure prediction, molecular dynamics, and materials acceleration.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Geometric GNNs</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Diffusion</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">BioML</span>
+              </div>
+            </div>
+
+            <!-- Research Domain 3 -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all group">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif">Robust & Reliable ML</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Investigating out-of-distribution generalisation, mechanistic interpretability, and uncertainty estimation in mission-critical AI applications.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">OOD Robustness</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Interpretability</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Calibration</span>
+              </div>
+            </div>
+
+            <!-- Research Domain 4 -->
+            <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all group">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif">Efficient Inference & Architecture</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Pruning, quantization, state-space models (Mamba), and sparse attention mechanisms designed for scalable deployment.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">State Space Models</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Efficiency</span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Quantization</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 3: NEWS & UPDATES -->
+        <section id="news" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Recent News & Announcements</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 03</span>
+          </div>
+
+          <!-- Timeline Container -->
+          <div class="relative border-l-2 border-slate-200 dark:border-slate-700 ml-3 space-y-6">
+            
+            <!-- News Item 1 -->
+            <div class="relative pl-6 group">
+              <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-indigo-600 ring-4 ring-slate-50 dark:ring-slate-900 group-hover:scale-125 transition-transform"></div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500 font-mono mb-1">
+                <span>OCT 2026</span>
+                <span>•</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium font-sans">Publication</span>
+              </div>
+              <p class="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                Our paper <em>"OmniVision-3D: Zero-Shot Multi-View Diffusion Foundation Model"</em> was accepted as an <strong>Oral Presentation at NeurIPS 2026</strong>!
+              </p>
+            </div>
+
+            <!-- News Item 2 -->
+            <div class="relative pl-6 group">
+              <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-400 dark:bg-slate-600 ring-4 ring-slate-50 dark:ring-slate-900 group-hover:scale-125 transition-transform"></div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500 font-mono mb-1">
+                <span>JUL 2026</span>
+                <span>•</span>
+                <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium font-sans">Talk</span>
+              </div>
+              <p class="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                Delivered an invited Keynote Talk on <em>"Geometric Representation Learning in Biomolecules"</em> at ICML 2026 Workshop on AI for Life Sciences.
+              </p>
+            </div>
+
+            <!-- News Item 3 -->
+            <div class="relative pl-6 group">
+              <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-400 dark:bg-slate-600 ring-4 ring-slate-50 dark:ring-slate-900 group-hover:scale-125 transition-transform"></div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500 font-mono mb-1">
+                <span>MAY 2026</span>
+                <span>•</span>
+                <span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-medium font-sans">Award</span>
+              </div>
+              <p class="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                Honored to receive the <strong>Stanford Postdoctoral Fellowship Award</strong> for interdisciplinary research in computational biology.
+              </p>
+            </div>
+
+            <!-- News Item 4 -->
+            <div class="relative pl-6 group">
+              <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-slate-400 dark:bg-slate-600 ring-4 ring-slate-50 dark:ring-slate-900 group-hover:scale-125 transition-transform"></div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500 font-mono mb-1">
+                <span>JAN 2026</span>
+                <span>•</span>
+                <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium font-sans">Service</span>
+              </div>
+              <p class="text-sm text-slate-800 dark:text-slate-200 font-medium">
+                Serving as Area Chair for ICLR 2026 (Representation Learning Track).
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- SECTION 4: SELECTED PUBLICATIONS (DYNAMIC FILTER & SEARCH) -->
+        <section id="publications" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+                <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+                <span>Selected Publications</span>
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">(* indicates equal contribution)</p>
+            </div>
+            <span class="text-xs font-mono text-slate-400 self-start sm:self-auto">Section // 04</span>
+          </div>
+
+          <!-- Publication Filter & Search Bar Toolbar -->
+          <div class="space-y-4 bg-white dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+            
+            <!-- Top Row: Search Input -->
+            <div class="relative">
+              <input type="text" id="pub-search" placeholder="Search publications by keyword, title, co-author, or venue..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+              <svg class="w-5 h-5 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+
+            <!-- Bottom Row: Filter Tags Button Group -->
+            <div class="flex flex-wrap items-center gap-2 pt-1" id="pub-filter-tags">
+              <button data-category="all" class="pub-filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-900 text-white dark:bg-indigo-600 transition-all">All Papers</button>
+              <button data-category="ai-ml" class="pub-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">AI / Machine Learning</button>
+              <button data-category="vision" class="pub-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">Computer Vision</button>
+              <button data-category="bio-ai" class="pub-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">AI for Science</button>
+            </div>
+          </div>
+
+          <!-- Publications List Container -->
+          <div class="space-y-4" id="publications-container">
+
+            <!-- PAPER CARD 1 -->
+            <article class="pub-card p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-5" data-category="ai-ml vision" data-search="omnivision-3d zero-shot multi-view diffusion alex h. zhao neurips 2026 oral">
+              <div class="w-full md:w-44 h-32 rounded-xl bg-slate-100 dark:bg-slate-900 shrink-0 overflow-hidden relative group flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                <!-- Abstract Thumbnail / Teaser Mock -->
+                <svg class="w-16 h-16 text-indigo-400 dark:text-indigo-600 opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500 text-white">Oral</span>
+              </div>
+
+              <div class="flex-1 flex flex-col justify-between space-y-3">
+                <div>
+                  <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-serif leading-snug">
+                    OmniVision-3D: Zero-Shot Multi-View Diffusion Foundation Model
+                  </h3>
+                  
+                  <!-- Authors List -->
+                  <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5">
+                    <strong class="text-indigo-800 dark:text-indigo-400 font-semibold underline decoration-indigo-300">Alex H. Zhao*</strong>, Sarah Jenkins*, David K. Liang, Ellen Vance
+                  </p>
+
+                  <!-- Venue & Badges -->
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      NeurIPS 2026
+                    </span>
+                    <span class="text-xs text-slate-400 font-mono">Acceptance Rate ~1.8%</span>
+                  </div>
+                </div>
+
+                <!-- Abstract snippet -->
+                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  We introduce OmniVision-3D, a generative framework that leverages latent geometric constraints for consistent multi-view 3D synthesis from single uncalibrated images in real-time.
+                </p>
+
+                <!-- Interactive Buttons ([PDF], [Code], [BibTeX]) -->
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z"></path></svg>
+                    <span>[PDF]</span>
+                  </a>
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    <span>[Code]</span>
+                  </a>
+                  <button onclick="openBibtexModal('zhao2026omnivision', 'OmniVision-3D: Zero-Shot Multi-View Diffusion Foundation Model', 'Alex H. Zhao, Sarah Jenkins, David K. Liang, Ellen Vance', 'Advances in Neural Information Processing Systems (NeurIPS)', '2026')" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>[BibTeX]</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <!-- PAPER CARD 2 -->
+            <article class="pub-card p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-5" data-category="bio-ai ai-ml" data-search="biogfold equivariant graph neural networks protein docking alex h. zhao cvpr 2025 spotlight">
+              <div class="w-full md:w-44 h-32 rounded-xl bg-slate-100 dark:bg-slate-900 shrink-0 overflow-hidden relative group flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                <svg class="w-16 h-16 text-emerald-400 dark:text-emerald-600 opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-600 text-white">Spotlight</span>
+              </div>
+
+              <div class="flex-1 flex flex-col justify-between space-y-3">
+                <div>
+                  <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-serif leading-snug">
+                    BioGFold: Equivariant Geometric Graphs for Flexible Protein-Ligand Docking
+                  </h3>
+                  
+                  <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5">
+                    <strong class="text-indigo-800 dark:text-indigo-400 font-semibold underline decoration-indigo-300">Alex H. Zhao</strong>, Raymond Zhang, Marcus Sterling
+                  </p>
+
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      CVPR 2025
+                    </span>
+                    <span class="text-xs text-slate-400 font-mono">Spotlight Paper</span>
+                  </div>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  Proposing SE(3)-equivariant Graph Neural Networks that capture rotational symmetries in molecular docking, outperforming previous baselines by 35% RMSD score.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z"></path></svg>
+                    <span>[PDF]</span>
+                  </a>
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    <span>[Code]</span>
+                  </a>
+                  <button onclick="openBibtexModal('zhao2025biogfold', 'BioGFold: Equivariant Geometric Graphs for Flexible Protein-Ligand Docking', 'Alex H. Zhao, Raymond Zhang, Marcus Sterling', 'IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)', '2025')" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>[BibTeX]</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <!-- PAPER CARD 3 -->
+            <article class="pub-card p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row gap-5" data-category="ai-ml" data-search="robust contrastive vision language alignment under label noise alex h. zhao icml 2024">
+              <div class="w-full md:w-44 h-32 rounded-xl bg-slate-100 dark:bg-slate-900 shrink-0 overflow-hidden relative group flex items-center justify-center border border-slate-200 dark:border-slate-800">
+                <svg class="w-16 h-16 text-blue-400 dark:text-blue-600 opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              </div>
+
+              <div class="flex-1 flex flex-col justify-between space-y-3">
+                <div>
+                  <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-serif leading-snug">
+                    Robust Contrastive Vision-Language Alignment Under Severe Web Noise
+                  </h3>
+                  
+                  <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5">
+                    <strong class="text-indigo-800 dark:text-indigo-400 font-semibold underline decoration-indigo-300">Alex H. Zhao</strong>, Lisa M. Wang, Marcus Sterling
+                  </p>
+
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      ICML 2024
+                    </span>
+                  </div>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  Addressing uncurated web-scale training data challenges by designing a noise-tolerant InfoNCE loss variant with dynamic temperature scheduling.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z"></path></svg>
+                    <span>[PDF]</span>
+                  </a>
+                  <a href="#" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    <span>[Code]</span>
+                  </a>
+                  <button onclick="openBibtexModal('zhao2024robust', 'Robust Contrastive Vision-Language Alignment Under Severe Web Noise', 'Alex H. Zhao, Lisa M. Wang, Marcus Sterling', 'International Conference on Machine Learning (ICML)', '2024')" class="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-indigo-800 hover:text-white dark:hover:bg-indigo-600 transition-colors flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>[BibTeX]</span>
+                  </button>
+                </div>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- Empty search result fallback -->
+          <div id="no-pub-found" class="hidden text-center py-12 bg-white dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+            <svg class="w-12 h-12 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">No matching publications found</p>
+            <p class="text-xs text-slate-400 mt-1">Try clearing your search query or selecting another filter tag.</p>
+          </div>
+        </section>
+
+
+        <!-- SECTION 5: TEACHING & SERVICE -->
+        <section id="teaching" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Teaching & Academic Service</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 05</span>
+          </div>
+
+          <div class="space-y-8">
+            <!-- Teaching Experience Block -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif flex items-center space-x-2">
+                <svg class="w-5 h-5 text-indigo-800 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+                <span>Teaching Assistantships</span>
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-400">CS 231n</span>
+                    <span class="text-xs text-slate-400">Spring 2025</span>
+                  </div>
+                  <h4 class="font-bold text-slate-900 dark:text-white text-sm mt-1">Deep Learning for Computer Vision</h4>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Stanford University — Guest Lecturer & Head TA (Enrollment: 320+ students).</p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-mono font-semibold text-indigo-800 dark:text-indigo-400">6.869</span>
+                    <span class="text-xs text-slate-400">Fall 2023</span>
+                  </div>
+                  <h4 class="font-bold text-slate-900 dark:text-white text-sm mt-1">Advances in Computer Vision</h4>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">MIT — Graduate Teaching Assistant. Designed homework assignments & recitations.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Service & Reviewing Block -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white font-serif flex items-center space-x-2">
+                <svg class="w-5 h-5 text-indigo-800 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                <span>Academic Service & Reviewing</span>
+              </h3>
+
+              <div class="p-5 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 space-y-3">
+                <div>
+                  <h4 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Area Chair / Senior Program Committee</h4>
+                  <p class="text-sm text-slate-700 dark:text-slate-200 font-medium mt-1">ICLR (2026), NeurIPS Workshop on AI4Science (2025)</p>
+                </div>
+                <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                  <h4 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Conference Reviewer</h4>
+                  <p class="text-sm text-slate-700 dark:text-slate-200 font-medium mt-1">NeurIPS (2022-2025), ICML (2023-2025), CVPR (2022-2026), ICCV (2023), ICLR (2023-2025)</p>
+                </div>
+                <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                  <h4 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Journal Reviewer</h4>
+                  <p class="text-sm text-slate-700 dark:text-slate-200 font-medium mt-1">IEEE TPAMI, Journal of Machine Learning Research (JMLR), Nature Machine Intelligence</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- SECTION 6: HONORS & AWARDS -->
+        <section id="awards" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Honors & Fellowships</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 06</span>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/60">
+            
+            <div class="p-4 sm:p-5 flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <span class="p-2 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-900 dark:text-white text-sm">Best Paper Honorable Mention</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">NeurIPS 2024 Conference</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-slate-400 font-semibold">2024</span>
+            </div>
+
+            <div class="p-4 sm:p-5 flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <span class="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path></svg>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-900 dark:text-white text-sm">NSF Graduate Research Fellowship (GRFP)</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">National Science Foundation ($138,000 research award)</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-slate-400 font-semibold">2021 - 2024</span>
+            </div>
+
+            <div class="p-4 sm:p-5 flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <span class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </span>
+                <div>
+                  <h3 class="font-bold text-slate-900 dark:text-white text-sm">MIT George M. Sprowls Outstanding PhD Thesis Award</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">EECS Department, MIT</p>
+                </div>
+              </div>
+              <span class="text-xs font-mono text-slate-400 font-semibold">2023</span>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- SECTION 7: CONTACT & OFFICE HOURS -->
+        <section id="contact" class="scroll-mt-24 space-y-6">
+          <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex items-center justify-between">
+            <h2 class="text-2xl lg:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight flex items-center space-x-3">
+              <span class="w-2 h-7 bg-indigo-800 dark:bg-indigo-500 rounded-full inline-block"></span>
+              <span>Contact & Location</span>
+            </h2>
+            <span class="text-xs font-mono text-slate-400">Section // 07</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Contact Card Details -->
+            <div class="p-6 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 space-y-4">
+              <div>
+                <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Email Address</h3>
+                <a href="mailto:alex.zhao@stanford.edu" class="text-sm font-semibold text-indigo-800 dark:text-indigo-400 hover:underline">alex.zhao@stanford.edu</a>
+              </div>
+
+              <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Office Address</h3>
+                <p class="text-sm text-slate-700 dark:text-slate-200 mt-1">
+                  Gates Computer Science Building, Room 342<br>
+                  353 Jane Stanford Way, Stanford University<br>
+                  Stanford, CA 94305, USA
+                </p>
+              </div>
+
+              <div class="border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold">Office Hours</h3>
+                <p class="text-sm text-slate-700 dark:text-slate-200 mt-1">Tuesdays & Thursdays: 14:00 - 16:00 PST (or by appointment)</p>
+              </div>
+            </div>
+
+            <!-- Styled Map Box / Directions Graphic -->
+            <div class="p-6 rounded-2xl bg-slate-900 text-white flex flex-col justify-between relative overflow-hidden group shadow-md">
+              <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-600/30 rounded-full blur-2xl group-hover:bg-indigo-500/40 transition-all"></div>
+              
+              <div>
+                <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-mono mb-3">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Stanford SAIL Campus</span>
+                </div>
+                <h3 class="text-xl font-serif font-bold">Gates Computer Science</h3>
+                <p class="text-xs text-slate-300 mt-2 leading-relaxed">Located in the heart of Stanford Engineering Quad. Visitor parking available at Roth Way Garage.</p>
+              </div>
+
+              <div class="pt-6">
+                <a href="https://maps.google.com" target="_blank" rel="noopener" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-white text-slate-900 text-xs font-semibold hover:bg-slate-100 transition-colors shadow">
+                  <svg class="w-4 h-4 text-indigo-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                  <span>Open in Google Maps</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-20 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 text-center text-xs text-slate-500 dark:text-slate-400 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p>© 2026 Dr. Alex H. Zhao. Built with Academic Homepage Template.</p>
+      <div class="flex items-center space-x-4">
+        <a href="#about" class="hover:underline">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= BIBTEX CITATION MODAL ================= -->
+  <div id="bibtex-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-700 shadow-2xl p-6 relative transform transition-all">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
+        <h3 class="text-base font-bold font-serif text-slate-900 dark:text-white flex items-center space-x-2">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <span>BibTeX Citation</span>
+        </h3>
+        <button onclick="closeBibtexModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- BibTeX Code Block Container -->
+      <div class="mt-4 relative">
+        <pre id="bibtex-content" class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs font-mono overflow-x-auto leading-relaxed border border-slate-800"></pre>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="mt-5 flex items-center justify-end space-x-3">
+        <button onclick="closeBibtexModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Close</button>
+        <button onclick="copyBibtexFromModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-800 text-white dark:bg-indigo-600 hover:bg-indigo-900 dark:hover:bg-indigo-500 shadow transition-all flex items-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+          <span>Copy BibTeX</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= JAVASCRIPT INTERACTIVE LOGIC ================= -->
+  <script>
+    // --- 1. Dark/Light Theme Switching with Persistence ---
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElem = document.documentElement;
+
+    // Load user theme preference
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      htmlElem.classList.add('dark');
+    } else {
+      htmlElem.classList.remove('dark');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      if (htmlElem.classList.contains('dark')) {
+        htmlElem.classList.remove('dark');
+        localStorage.theme = 'light';
+      } else {
+        htmlElem.classList.add('dark');
+        localStorage.theme = 'dark';
+      }
+    });
+
+    // --- 2. Mobile Drawer Navigation Toggle ---
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+      });
+    });
+
+    // --- 3. Publications Dynamic Filter & Live Search ---
+    const searchInput = document.getElementById('pub-search');
+    const filterButtons = document.querySelectorAll('.pub-filter-btn');
+    const pubCards = document.querySelectorAll('.pub-card');
+    const noPubFound = document.getElementById('no-pub-found');
+
+    let currentCategory = 'all';
+
+    function filterPublications() {
+      const query = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+
+      pubCards.forEach(card => {
+        const categories = card.getAttribute('data-category').split(' ');
+        const searchText = card.getAttribute('data-search').toLowerCase();
+
+        const matchesCategory = (currentCategory === 'all') || categories.includes(currentCategory);
+        const matchesSearch = searchText.includes(query);
+
+        if (matchesCategory && matchesSearch) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      if (visibleCount === 0) {
+        noPubFound.classList.remove('hidden');
+      } else {
+        noPubFound.classList.add('hidden');
+      }
+    }
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('active', 'bg-indigo-900', 'text-white', 'dark:bg-indigo-600');
+          b.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-700', 'dark:text-slate-300');
+        });
+
+        btn.classList.add('active', 'bg-indigo-900', 'text-white', 'dark:bg-indigo-600');
+        btn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-700', 'dark:text-slate-300');
+
+        currentCategory = btn.getAttribute('data-category');
+        filterPublications();
+      });
+    });
+
+    searchInput.addEventListener('input', filterPublications);
+
+    // --- 4. BibTeX Citation Modal & Copying Logic ---
+    const bibtexModal = document.getElementById('bibtex-modal');
+    const bibtexContent = document.getElementById('bibtex-content');
+
+    function openBibtexModal(key, title, authors, booktitle, year) {
+      const formattedBibtex = `@inproceedings{${key},\n  title={${title}},\n  author={${authors}},\n  booktitle={${booktitle}},\n  year={${year}}\n}`;
+      bibtexContent.textContent = formattedBibtex;
+      bibtexModal.classList.remove('hidden');
+    }
+
+    function closeBibtexModal() {
+      bibtexModal.classList.add('hidden');
+    }
+
+    function copyBibtexFromModal() {
+      copyToClipboard(bibtexContent.textContent, 'BibTeX copied to clipboard!');
+      closeBibtexModal();
+    }
+
+    // --- 5. Clipboard Copy Helper with Toast Notification ---
+    function copyToClipboard(text, customMessage) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(customMessage || 'Copied to clipboard!');
+        });
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(customMessage || 'Copied to clipboard!');
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    function showCvToast() {
+      showToast('CV Download triggered (Demo PDF placeholder).');
+    }
+
+    // --- 6. Active Scroll Spy Navigation Highlighting ---
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= (sectionTop - 120)) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('text-indigo-900', 'font-bold', 'dark:text-indigo-400');
+        if (link.getAttribute('href') === `#${current}`) {
+          link.classList.add('text-indigo-900', 'font-bold', 'dark:text-indigo-400');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

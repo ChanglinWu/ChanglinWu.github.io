@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的 3D 互动空间 | Personal Studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #1a181b;
+            user-select: none;
+        }
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            outline: none;
+        }
+        /* Custom Scrollbar for Drawer/Modal */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="text-slate-100 antialiased overflow-hidden">
+
+    <!-- 3D WebGL Canvas -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Top Navigation Bar Overlay -->
+    <header class="fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 pointer-events-none">
+        <div class="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 pointer-events-auto shadow-lg">
+            <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+            <span class="font-bold text-sm sm:text-base tracking-wide bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">
+                Alex's Digital Studio
+            </span>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-2 bg-slate-900/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 pointer-events-auto shadow-lg">
+            <button onclick="openPanel('about')" class="px-4 py-2 text-xs font-medium rounded-xl hover:bg-white/10 transition-all flex items-center gap-2 text-slate-200 hover:text-amber-300">
+                <span>📚</span> 个人简介
+            </button>
+            <button onclick="openPanel('projects')" class="px-4 py-2 text-xs font-medium rounded-xl hover:bg-white/10 transition-all flex items-center gap-2 text-slate-200 hover:text-amber-300">
+                <span>🖥️</span> 项目展示
+            </button>
+            <button onclick="openPanel('contact')" class="px-4 py-2 text-xs font-medium rounded-xl hover:bg-white/10 transition-all flex items-center gap-2 text-slate-200 hover:text-amber-300">
+                <span>💻</span> 联系方式
+            </button>
+            <div class="w-px h-4 bg-white/10 my-auto mx-1"></div>
+            <button onclick="resetCamera()" class="p-2 text-xs rounded-xl hover:bg-white/10 transition-all text-slate-400 hover:text-white" title="重置视角">
+                🔄
+            </button>
+        </nav>
+    </header>
+
+    <!-- Interactive Hint Tooltip -->
+    <div id="interactive-hint" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 bg-slate-900/80 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full text-xs text-slate-300 flex items-center gap-2 pointer-events-none shadow-2xl transition-all duration-300">
+        <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <span>提示：鼠标按住滑动旋转视角 | 点击房间内的 <b>书架</b>、<b>书桌</b>、<b>电脑</b> 探索内容</span>
+    </div>
+
+    <!-- Mobile Quick Nav Floating Buttons (Bottom Mobile Only) -->
+    <div class="fixed bottom-16 left-1/2 -translate-x-1/2 z-20 flex md:hidden items-center gap-2 bg-slate-900/80 backdrop-blur-md p-2 rounded-2xl border border-white/10 pointer-events-auto">
+        <button onclick="openPanel('about')" class="p-2.5 bg-white/5 rounded-xl text-xs">📚 简介</button>
+        <button onclick="openPanel('projects')" class="p-2.5 bg-white/5 rounded-xl text-xs">🖥️ 项目</button>
+        <button onclick="openPanel('contact')" class="p-2.5 bg-white/5 rounded-xl text-xs">💻 联系</button>
+        <button onclick="resetCamera()" class="p-2.5 bg-white/5 rounded-xl text-xs">🔄</button>
+    </div>
+
+    <!-- 3D Object Hover Tag -->
+    <div id="hover-tag" class="fixed pointer-events-none z-30 opacity-0 transition-opacity duration-200 -translate-x-1/2 -translate-y-12">
+        <div class="bg-amber-400/90 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-amber-200 flex items-center gap-1.5">
+            <span id="hover-tag-icon">✨</span>
+            <span id="hover-tag-text">点击探索</span>
+        </div>
+    </div>
+
+    <!-- Slide-over Modal / Drawer Overlay -->
+    <div id="modal-backdrop" class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" onclick="closePanel()"></div>
+    
+    <aside id="modal-drawer" class="fixed top-0 right-0 bottom-0 z-50 w-full max-w-lg bg-slate-900/95 border-l border-white/10 p-6 sm:p-8 flex flex-col justify-between translate-x-full transition-transform duration-300 ease-out shadow-2xl overflow-y-auto">
+        
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between pb-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <span id="drawer-icon" class="text-2xl p-2 bg-white/5 rounded-xl">📚</span>
+                <h2 id="drawer-title" class="text-xl font-bold text-white tracking-wide">个人简介</h2>
+            </div>
+            <button onclick="closePanel()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                ✕
+            </button>
+        </div>
+
+        <!-- Drawer Content Body -->
+        <div id="drawer-body" class="my-6 flex-1 space-y-6 text-slate-300 text-sm leading-relaxed">
+            <!-- Content dynamically injected via JS -->
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="pt-4 border-t border-white/10 text-xs text-slate-500 flex justify-between items-center">
+            <span>© 2026 Alex's Studio</span>
+            <span class="text-amber-400/80">Press ESC or click outside to close</span>
+        </div>
+    </aside>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Content Data ---
+        const PANEL_DATA = {
+            about: {
+                title: "关于我 / About Me",
+                icon: "📚",
+                content: `
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-slate-950 shadow-md">
+                                A
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-white">Alex Zhang</h3>
+                                <p class="text-xs text-amber-300/80 mt-0.5">全栈开发者 & 3D 视觉爱好者</p>
+                                <p class="text-xs text-slate-400 mt-1">📍 现居 香港 / 深圳</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">个人简介</h4>
+                            <p class="text-slate-300">
+                                嗨！我是 Alex。我喜欢用代码构建充满灵感与优雅交互的数字体验。专注 Web 3D 交互、全栈应用开发与 AI 工具流整合。
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">技术栈关键词</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-2.5 py-1 bg-amber-400/10 text-amber-300 border border-amber-400/20 rounded-lg text-xs">Three.js / WebGL</span>
+                                <span class="px-2.5 py-1 bg-blue-400/10 text-blue-300 border border-blue-400/20 rounded-lg text-xs">React / Next.js</span>
+                                <span class="px-2.5 py-1 bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 rounded-lg text-xs">TypeScript</span>
+                                <span class="px-2.5 py-1 bg-purple-400/10 text-purple-300 border border-purple-400/20 rounded-lg text-xs">Tailwind CSS</span>
+                                <span class="px-2.5 py-1 bg-rose-400/10 text-rose-300 border border-rose-400/20 rounded-lg text-xs">Node.js / Python</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
+                            <h4 class="text-xs font-bold text-amber-300 mb-1">💡 探索信念</h4>
+                            <p class="text-xs text-amber-100/80">"Great software is like art — it must be performant, functional, and delightful."</p>
+                        </div>
+                    </div>
+                `
+            },
+            projects: {
+                title: "代表作品 / Featured Projects",
+                icon: "🖥️",
+                content: `
+                    <div class="space-y-4">
+                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">✨ 3D 拟真物理探索空间</h3>
+                                <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Interactive 3D</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3">基于 Three.js + Cannon.js 构建的浏览器三维数字游戏房间，支持重力感应与柔性碰撞。</p>
+                            <div class="flex gap-2 text-[10px] text-slate-400">
+                                <span class="bg-white/5 px-2 py-0.5 rounded">Three.js</span>
+                                <span class="bg-white/5 px-2 py-0.5 rounded">WebGL</span>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">🤖 AI 知识库与工作流引擎</h3>
+                                <span class="text-[10px] bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full">Full Stack</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3">支持多模态 Agent 调度的个人知识库管理工具，高效自动化整合日常工作流程。</p>
+                            <div class="flex gap-2 text-[10px] text-slate-400">
+                                <span class="bg-white/5 px-2 py-0.5 rounded">Next.js</span>
+                                <span class="bg-white/5 px-2 py-0.5 rounded">OpenAI API</span>
+                            </div>
+                        </div>
+
+                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">🎨 Minimal Dashboard UI Kit</h3>
+                                <span class="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">Design System</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mb-3">极简现代暗黑风格仪表盘组件库，超过 3000+ GitHub Stars。</p>
+                            <div class="flex gap-2 text-[10px] text-slate-400">
+                                <span class="bg-white/5 px-2 py-0.5 rounded">TailwindCSS</span>
+                                <span class="bg-white/5 px-2 py-0.5 rounded">Figma</span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            contact: {
+                title: "联系方式 / Contact Info",
+                icon: "💻",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-slate-300 text-xs">有项目合作意向或想交流技术？欢迎随时与我取得联系！</p>
+                        
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">📧</span>
+                                    <div>
+                                        <p class="text-[10px] text-slate-400">电子邮箱</p>
+                                        <p class="text-xs font-mono text-amber-200">alex.design.dev@gmail.com</p>
+                                    </div>
+                                </div>
+                                <button onclick="navigator.clipboard.writeText('alex.design.dev@gmail.com'); alert('邮箱已复制到剪贴板！');" class="px-3 py-1 bg-white/10 hover:bg-white/20 text-xs rounded-lg transition-all text-slate-200">
+                                    复制
+                                </button>
+                            </div>
+
+                            <a href="https://github.com" target="_blank" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">🐙</span>
+                                    <div>
+                                        <p class="text-[10px] text-slate-400">GitHub 主页</p>
+                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">github.com/alex-developer</p>
+                                    </div>
+                                </div>
+                                <span class="text-slate-500 group-hover:text-white">↗</span>
+                            </a>
+
+                            <a href="https://twitter.com" target="_blank" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">🐦</span>
+                                    <div>
+                                        <p class="text-[10px] text-slate-400">Twitter / X</p>
+                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">@alex_dev_studio</p>
+                                    </div>
+                                </div>
+                                <span class="text-slate-500 group-hover:text-white">↗</span>
+                            </a>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-4 rounded-2xl border border-amber-500/20">
+                            <h4 class="text-xs font-bold text-amber-300 mb-1">💬 快速留言</h4>
+                            <p class="text-[11px] text-slate-400 mb-3">发送消息给我，我会在 24 小时内回复。</p>
+                            <input type="text" placeholder="你的联系邮箱..." class="w-full px-3 py-2 bg-slate-950/60 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400/50 mb-2">
+                            <textarea rows="2" placeholder="想要聊聊的内容..." class="w-full px-3 py-2 bg-slate-950/60 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400/50 mb-2"></textarea>
+                            <button onclick="alert('消息已发送（模拟）！感谢留言！');" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg">
+                                发送消息
+                            </button>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // --- 2. Three.js Engine Variables ---
+        let scene, camera, renderer, controls;
+        let raycaster, mouse;
+        let interactiveObjects = [];
+        let hoveredObject = null;
+
+        // Colors
+        const PALETTE = {
+            floor: 0xc49a6c,        // Warm Oak Wood
+            wall: 0x2d2b30,         // Dark Modern Interior Wall
+            desk: 0x5a3d28,         // Dark Walnut
+            bookshelf: 0x7a5230,    // Natural Wood
+            laptop: 0x333333,       // Space Gray
+            screen: 0x38bdf8,       // Glowing Screen
+            chair: 0x2c4c5e,       // Teal Fabric
+            plantPot: 0xe2e8f0,     // White Ceramic
+            plantLeaves: 0x3a7d44,  // Leaf Green
+            lampBase: 0xf59e0b,     // Golden Brass
+            lampGlow: 0xffe8b3,     // Soft Golden Light
+            highlight: 0xfacc15    // Hover Highlight Gold
+        };
+
+        // --- 3. Init Scene ---
+        function init() {
+            const canvas = document.getElementById('webgl-canvas');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x131114);
+            scene.fog = new THREE.FogExp2(0x131114, 0.035);
+
+            // Camera (Isometric angle)
+            camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(12, 10, 12);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 1.8, 0);
+            controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't clip under floor
+            controls.minDistance = 6;
+            controls.maxDistance = 22;
+
+            // Raycaster
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Build Room Objects
+            buildRoom();
+
+            // Lighting Setup
+            setupLighting();
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('click', onClick);
+            window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
+
+            // Animation Loop
+            animate();
+        }
+
+        // --- 4. Procedural Room Builder ---
+        function buildRoom() {
+            const roomGroup = new THREE.Group();
+
+            // Materials
+            const floorMat = new THREE.MeshStandardMaterial({ color: PALETTE.floor, roughness: 0.4, metalness: 0.1 });
+            const wallMat = new THREE.MeshStandardMaterial({ color: PALETTE.wall, roughness: 0.8 });
+            const woodMat = new THREE.MeshStandardMaterial({ color: PALETTE.desk, roughness: 0.5 });
+            const shelfMat = new THREE.MeshStandardMaterial({ color: PALETTE.bookshelf, roughness: 0.6 });
+
+            // Floor
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 10), floorMat);
+            floor.position.set(0, -0.2, 0);
+            floor.receiveShadow = true;
+            roomGroup.add(floor);
+
+            // Back Wall Left (Z axis)
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(0.3, 7, 10), wallMat);
+            wallLeft.position.set(-5.15, 3.3, 0);
+            wallLeft.receiveShadow = true;
+            roomGroup.add(wallLeft);
+
+            // Back Wall Right (X axis)
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(10, 7, 0.3), wallMat);
+            wallRight.position.set(0, 3.3, -5.15);
+            wallRight.receiveShadow = true;
+            roomGroup.add(wallRight);
+
+            // Baseboards
+            const baseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.3, 10), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+            baseboardLeft.position.set(-4.95, 0.15, 0);
+            roomGroup.add(baseboardLeft);
+
+            // Rug
+            const rugMat = new THREE.MeshStandardMaterial({ color: 0xc87d55, roughness: 0.9 });
+            const rug = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.02, 32), rugMat);
+            rug.position.set(0, 0.01, 1);
+            rug.receiveShadow = true;
+            roomGroup.add(rug);
+
+            // === A. DESK (Interactive: Projects) ===
+            const deskGroup = new THREE.Group();
+            deskGroup.userData = { id: 'projects', label: '项目展示', icon: '🖥️' };
+
+            // Desk Top
+            const deskTop = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.15, 2.2), woodMat);
+            deskTop.position.set(0, 1.6, 0);
+            deskTop.castShadow = true;
+            deskTop.receiveShadow = true;
+            deskGroup.add(deskTop);
+
+            // Desk Legs
+            const legGeo = new THREE.BoxGeometry(0.12, 1.6, 0.12);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 });
+            const legPositions = [
+                [-1.9, 0.8, -0.9], [1.9, 0.8, -0.9],
+                [-1.9, 0.8, 0.9], [1.9, 0.8, 0.9]
+            ];
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, legMat);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                deskGroup.add(leg);
+            });
+
+            // Desk Drawer
+            const drawer = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 1.8), woodMat);
+            drawer.position.set(1.2, 1.3, 0);
+            drawer.castShadow = true;
+            deskGroup.add(drawer);
+
+            deskGroup.position.set(-2, 0, -3);
+            roomGroup.add(deskGroup);
+            registerInteractiveObject(deskGroup);
+
+            // === B. LAPTOP ON DESK (Interactive: Contact) ===
+            const laptopGroup = new THREE.Group();
+            laptopGroup.userData = { id: 'contact', label: '联系方式', icon: '💻' };
+
+            const laptopMat = new THREE.MeshStandardMaterial({ color: PALETTE.laptop, metalness: 0.8, roughness: 0.3 });
+            
+            // Laptop Base
+            const laptopBase = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.6), laptopMat);
+            laptopBase.position.set(0, 1.7, 0);
+            laptopBase.castShadow = true;
+            laptopGroup.add(laptopBase);
+
+            // Laptop Screen
+            const laptopScreen = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.03), laptopMat);
+            laptopScreen.position.set(0, 1.95, -0.28);
+            laptopScreen.rotation.x = -0.2;
+            laptopScreen.castShadow = true;
+            laptopGroup.add(laptopScreen);
+
+            // Glowing Screen Display
+            const screenGlowMat = new THREE.MeshBasicMaterial({ color: PALETTE.screen });
+            const screenDisplay = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.48), screenGlowMat);
+            screenDisplay.position.set(0, 1.96, -0.26);
+            screenDisplay.rotation.x = -0.2;
+            laptopGroup.add(screenDisplay);
+
+            laptopGroup.position.set(-2.2, 0, -3.1);
+            roomGroup.add(laptopGroup);
+            registerInteractiveObject(laptopGroup);
+
+            // === C. BOOKSHELF (Interactive: About Me) ===
+            const bookshelfGroup = new THREE.Group();
+            bookshelfGroup.userData = { id: 'about', label: '个人简介', icon: '📚' };
+
+            // Shelf Main Frame
+            const frameGeo = new THREE.BoxGeometry(2.2, 5.2, 1.0);
+            const bookshelfFrame = new THREE.Mesh(frameGeo, shelfMat);
+            bookshelfFrame.position.set(0, 2.6, 0);
+            bookshelfFrame.castShadow = true;
+            bookshelfFrame.receiveShadow = true;
+            bookshelfGroup.add(bookshelfFrame);
+
+            // Bookshelf Slots/Planks & Books
+            const bookColors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0xec4899];
+            for (let i = 0; i < 4; i++) {
+                const shelfY = 0.8 + i * 1.2;
+                // Add Books
+                for (let j = -0.8; j <= 0.6; j += 0.22) {
+                    if (Math.random() > 0.3) {
+                        const bookHeight = 0.4 + Math.random() * 0.25;
+                        const bookMat = new THREE.MeshStandardMaterial({ 
+                            color: bookColors[Math.floor(Math.random() * bookColors.length)], 
+                            roughness: 0.6 
+                        });
+                        const book = new THREE.Mesh(new THREE.BoxGeometry(0.16, bookHeight, 0.6), bookMat);
+                        book.position.set(j, shelfY + bookHeight / 2, 0.05);
+                        book.castShadow = true;
+                        bookshelfGroup.add(book);
+                    }
+                }
+            }
+
+            bookshelfGroup.position.set(3.8, 0, -3.8);
+            roomGroup.add(bookshelfGroup);
+            registerInteractiveObject(bookshelfGroup);
+
+            // === D. DECORATIONS (Chair, Plant, Desk Lamp, Poster) ===
+            
+            // Chair
+            const chairGroup = new THREE.Group();
+            const chairSeat = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.12, 16), new THREE.MeshStandardMaterial({ color: PALETTE.chair, roughness: 0.6 }));
+            chairSeat.position.set(0, 0.9, 0);
+            chairSeat.castShadow = true;
+            chairGroup.add(chairSeat);
+
+            const chairBack = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.8, 0.1), new THREE.MeshStandardMaterial({ color: PALETTE.chair, roughness: 0.6 }));
+            chairBack.position.set(0, 1.35, 0.5);
+            chairBack.castShadow = true;
+            chairGroup.add(chairBack);
+
+            const chairLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8), legMat);
+            chairLeg.position.set(0, 0.45, 0);
+            chairLeg.castShadow = true;
+            chairGroup.add(chairLeg);
+
+            chairGroup.position.set(-2, 0, -1.3);
+            chairGroup.rotation.y = -Math.PI / 6;
+            roomGroup.add(chairGroup);
+
+            // House Plant
+            const plantGroup = new THREE.Group();
+            const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.3, 0.7, 16), new THREE.MeshStandardMaterial({ color: PALETTE.plantPot, roughness: 0.3 }));
+            pot.position.set(0, 0.35, 0);
+            pot.castShadow = true;
+            plantGroup.add(pot);
+
+            const leafMat = new THREE.MeshStandardMaterial({ color: PALETTE.plantLeaves, roughness: 0.6 });
+            for (let l = 0; l < 7; l++) {
+                const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), leafMat);
+                leaf.scale.set(1.2, 0.2, 0.6);
+                leaf.position.set((Math.random() - 0.5) * 0.3, 0.75 + Math.random() * 0.3, (Math.random() - 0.5) * 0.3);
+                leaf.rotation.set(Math.random(), Math.random() * Math.PI, Math.random());
+                leaf.castShadow = true;
+                plantGroup.add(leaf);
+            }
+            plantGroup.position.set(-4.1, 0, 3.5);
+            roomGroup.add(plantGroup);
+
+            // Desk Lamp
+            const lampGroup = new THREE.Group();
+            const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.05, 16), new THREE.MeshStandardMaterial({ color: PALETTE.lampBase, metalness: 0.8, roughness: 0.2 }));
+            lampBase.position.set(0, 1.7, 0);
+            lampGroup.add(lampBase);
+
+            const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 8), new THREE.MeshStandardMaterial({ color: PALETTE.lampBase, metalness: 0.8 }));
+            lampStem.position.set(0, 2.0, 0);
+            lampStem.rotation.z = -0.3;
+            lampGroup.add(lampStem);
+
+            const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.3, 16), new THREE.MeshStandardMaterial({ color: PALETTE.lampBase, metalness: 0.5, roughness: 0.3 }));
+            lampShade.position.set(-0.15, 2.25, 0);
+            lampShade.rotation.z = Math.PI / 4;
+            lampGroup.add(lampShade);
+
+            // Warm Lamp Light Source
+            const lampLight = new THREE.PointLight(PALETTE.lampGlow, 1.8, 5);
+            lampLight.position.set(-0.25, 2.1, 0);
+            lampLight.castShadow = true;
+            lampLight.shadow.bias = -0.002;
+            lampGroup.add(lampLight);
+
+            lampGroup.position.set(-0.5, 0, -3.6);
+            roomGroup.add(lampGroup);
+
+            // Wall Frame / Poster
+            const posterMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
+            const posterFrame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.6, 0.05), posterMat);
+            posterFrame.position.set(0.5, 4.2, -4.95);
+            posterFrame.castShadow = true;
+            roomGroup.add(posterFrame);
+
+            const posterInner = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.4), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+            posterInner.position.set(0.5, 4.2, -4.92);
+            roomGroup.add(posterInner);
+
+            scene.add(roomGroup);
+        }
+
+        // --- Helper: Register Interactive Mesh ---
+        function registerInteractiveObject(group) {
+            group.traverse((child) => {
+                if (child.isMesh) {
+                    child.userData.parentGroup = group;
+                    interactiveObjects.push(child);
+                }
+            });
+        }
+
+        // --- 5. Lighting Setup ---
+        function setupLighting() {
+            // Ambient Warm Light
+            const ambientLight = new THREE.AmbientLight(0xfff5ea, 0.65);
+            scene.add(ambientLight);
+
+            // Main Directional Sun Light (Warm Keylight)
+            const sunLight = new THREE.DirectionalLight(0xffecd1, 1.2);
+            sunLight.position.set(8, 14, 10);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 35;
+            sunLight.shadow.camera.left = -8;
+            sunLight.shadow.camera.right = 8;
+            sunLight.shadow.camera.top = 8;
+            sunLight.shadow.camera.bottom = -8;
+            scene.add(sunLight);
+
+            // Cool Fill Light from Window Angle
+            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
+            fillLight.position.set(-10, 8, -5);
+            scene.add(fillLight);
+        }
+
+        // --- 6. Interactivity & Raycasting ---
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Move Hover Tag
+            const tag = document.getElementById('hover-tag');
+            tag.style.left = `${event.clientX}px`;
+            tag.style.top = `${event.clientY}px`;
+
+            // Perform Raycasting
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(interactiveObjects);
+
+            if (intersects.length > 0) {
+                const hitObject = intersects[0].object;
+                const parentGroup = hitObject.userData.parentGroup;
+
+                if (hoveredObject !== parentGroup) {
+                    resetHoverEffect();
+                    hoveredObject = parentGroup;
+                    applyHoverEffect(hoveredObject);
+                }
+
+                // Show Tag UI
+                document.body.style.cursor = 'pointer';
+                document.getElementById('hover-tag-icon').textContent = parentGroup.userData.icon || '✨';
+                document.getElementById('hover-tag-text').textContent = `点击查看 ${parentGroup.userData.label}`;
+                tag.classList.remove('opacity-0');
+            } else {
+                if (hoveredObject) {
+                    resetHoverEffect();
+                    hoveredObject = null;
+                }
+                document.body.style.cursor = 'default';
+                tag.classList.add('opacity-0');
+            }
+        }
+
+        function applyHoverEffect(group) {
+            group.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    child.userData.originalEmissive = child.material.emissive ? child.material.emissive.getHex() : 0x000000;
+                    if (child.material.emissive) {
+                        child.material.emissive.setHex(0x332600);
+                    }
+                }
+            });
+            gsap.to(group.scale, { x: 1.03, y: 1.03, z: 1.03, duration: 0.2, ease: "power1.out" });
+        }
+
+        function resetHoverEffect() {
+            if (!hoveredObject) return;
+            hoveredObject.traverse((child) => {
+                if (child.isMesh && child.material && child.material.emissive) {
+                    child.material.emissive.setHex(child.userData.originalEmissive || 0x000000);
+                }
+            });
+            gsap.to(hoveredObject.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 0.2, ease: "power1.out" });
+        }
+
+        function onClick(event) {
+            if (hoveredObject && hoveredObject.userData && hoveredObject.userData.id) {
+                openPanel(hoveredObject.userData.id);
+            }
+        }
+
+        // --- 7. Modal Drawer Controls ---
+        function openPanel(id) {
+            const data = PANEL_DATA[id];
+            if (!data) return;
+
+            document.getElementById('drawer-icon').textContent = data.icon;
+            document.getElementById('drawer-title').textContent = data.title;
+            document.getElementById('drawer-body').innerHTML = data.content;
+
+            const backdrop = document.getElementById('modal-backdrop');
+            const drawer = document.getElementById('modal-drawer');
+
+            backdrop.classList.remove('pointer-events-none');
+            backdrop.classList.remove('opacity-0');
+            drawer.classList.remove('translate-x-full');
+
+            // Slight camera focus effect
+            focusCameraOnObject(id);
+        }
+
+        function closePanel() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const drawer = document.getElementById('modal-drawer');
+
+            backdrop.classList.add('opacity-0');
+            backdrop.classList.add('pointer-events-none');
+            drawer.classList.add('translate-x-full');
+
+            resetCamera();
+        }
+
+        function focusCameraOnObject(id) {
+            let targetPos = { x: 0, y: 1.8, z: 0 };
+            let camPos = { x: 10, y: 8, z: 10 };
+
+            if (id === 'projects') {
+                targetPos = { x: -2, y: 1.6, z: -3 };
+                camPos = { x: 4, y: 6, z: 4 };
+            } else if (id === 'about') {
+                targetPos = { x: 3.8, y: 2.6, z: -3.8 };
+                camPos = { x: 8, y: 5, z: 2 };
+            } else if (id === 'contact') {
+                targetPos = { x: -2.2, y: 1.9, z: -3.1 };
+                camPos = { x: -1, y: 4, z: 1 };
+            }
+
+            gsap.to(controls.target, { x: targetPos.x, y: targetPos.y, z: targetPos.z, duration: 1.2, ease: "power2.inOut" });
+            gsap.to(camera.position, { x: camPos.x, y: camPos.y, z: camPos.z, duration: 1.2, ease: "power2.inOut" });
+        }
+
+        function resetCamera() {
+            gsap.to(controls.target, { x: 0, y: 1.8, z: 0, duration: 1.2, ease: "power2.inOut" });
+            gsap.to(camera.position, { x: 12, y: 10, z: 12, duration: 1.2, ease: "power2.inOut" });
+        }
+
+        // --- 8. Window Resize Handling ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- 9. Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update Controls
+            controls.update();
+
+            // Subtle Idle Floating / Light pulsation
+            const time = Date.now() * 0.0015;
+            scene.traverse((child) => {
+                if (child.isPointLight) {
+                    child.intensity = 1.8 + Math.sin(time * 3) * 0.15;
+                }
+            });
+
+            // Render
+            renderer.render(scene, camera);
+        }
+
+        // Start App on Window Load
+        window.onload = init;
+    </script>
+</body>
+</html>
