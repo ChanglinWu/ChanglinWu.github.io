@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artoria Pendragon (Saber) - 3D Exhibition & Model Viewer</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js & Plugins -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- GSAP for Smooth Camera Transitions -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            saberGold: '#d4af37',
+            saberGoldGlow: '#f39c12',
+            saberBlue: '#1e3a8a',
+            saberDarkBlue: '#0f172a',
+            fateGlass: 'rgba(15, 23, 42, 0.85)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #090d16;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Custom Glassmorphism UI */
+    .fate-card {
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(212, 175, 55, 0.1);
+    }
+
+    .fate-card-gold {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(243, 156, 18, 0.6);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+    }
+
+    .fate-btn {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fate-btn:hover {
+      border-color: rgba(243, 156, 18, 0.9);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .fate-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.4);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(243, 156, 18, 0.8);
+    }
+
+    /* Gold text shine animation */
+    .gold-shine {
+      background: linear-gradient(90deg, #b8860b 0%, #ffd700 50%, #b8860b 100%);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shine 4s linear infinite;
+    }
+
+    @keyframes shine {
+      to { background-position: 200% center; }
+    }
+
+    /* Pulse Glow */
+    .excalibur-active-glow {
+      box-shadow: 0 0 25px #ffd700, inset 0 0 15px #ffd700;
+      border-color: #ffffff !important;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-100 antialiased h-screen w-screen relative">
+
+  <!-- Canvas Container -->
+  <div id="canvas-container" class="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-700">
+    <div class="relative flex items-center justify-center mb-6">
+      <div class="w-24 h-24 rounded-full border-2 border-saberGold/20 border-t-saberGold animate-spin"></div>
+      <i class="fa-solid fa-burst text-3xl text-saberGold absolute animate-pulse"></i>
+    </div>
+    <h1 class="font-cinzel text-2xl md:text-3xl font-bold tracking-widest text-saberGold mb-2">ARTORIA PENDRAGON</h1>
+    <p class="text-xs tracking-widest text-slate-400 uppercase">1/7 Scale Saber Figure Scene Loading...</p>
+  </div>
+
+  <!-- TOP HEADER BAR -->
+  <header class="absolute top-0 left-0 right-0 z-20 p-4 pointer-events-none flex justify-between items-center bg-gradient-to-b from-slate-950/80 to-transparent">
+    <div class="pointer-events-auto flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full border border-saberGold/50 bg-saberDarkBlue/80 flex items-center justify-center shadow-lg">
+        <i class="fa-solid fa-shield-halved text-saberGold text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-saberGold/20 text-saberGold border border-saberGold/30">Servant Class: Saber</span>
+          <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-900/40 text-blue-300 border border-blue-500/30">Fate/stay night</span>
+        </div>
+        <h1 class="font-cinzel text-lg md:text-xl font-bold tracking-wider text-slate-100">Artoria Pendragon <span class="text-saberGold text-sm font-normal">(约束胜利之剑)</span></h1>
+      </div>
+    </div>
+
+    <!-- Header Quick Actions -->
+    <div class="pointer-events-auto flex items-center gap-2">
+      <button id="btn-upload-trigger" title="Upload custom GLTF/GLB model" class="fate-btn fate-card px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-cloud-arrow-up text-saberGold"></i>
+        <span class="hidden sm:inline">Upload Model</span>
+      </button>
+
+      <button id="btn-screenshot" title="Take 3D Snapshot" class="fate-btn fate-card px-3 py-2 rounded-lg text-xs font-semibold text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-camera text-saberGold"></i>
+        <span class="hidden sm:inline">Snapshot</span>
+      </button>
+
+      <button id="btn-audio-toggle" title="Toggle Sound FX" class="fate-btn fate-card w-9 h-9 rounded-lg flex items-center justify-center text-slate-200">
+        <i class="fa-solid fa-volume-high text-saberGold" id="audio-icon"></i>
+      </button>
+
+      <button id="btn-info-toggle" title="Toggle Servant Stats Drawer" class="fate-btn fate-card w-9 h-9 rounded-lg flex items-center justify-center text-slate-200 md:hidden">
+        <i class="fa-solid fa-bars text-saberGold"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- LEFT DRAWER: SERVANT STATS & PROFILE -->
+  <aside id="stats-drawer" class="absolute top-20 left-4 z-20 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto fate-card rounded-xl p-4 transition-all duration-300 transform -translate-x-full md:translate-x-0">
+    <div class="flex justify-between items-center pb-3 border-b border-saberGold/20 mb-3">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-scroll text-saberGold"></i>
+        <h2 class="font-cinzel text-sm font-bold text-saberGold tracking-wide">SERVANT PARAMETERS</h2>
+      </div>
+      <button id="btn-close-drawer" class="text-slate-400 hover:text-white md:hidden"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Servant Details -->
+    <div class="space-y-3 text-xs">
+      <!-- Command Seal Graphic -->
+      <div class="fate-card p-3 rounded-lg flex items-center justify-around bg-saberDarkBlue/40">
+        <div class="text-center">
+          <p class="text-[10px] text-slate-400 uppercase">Master</p>
+          <p class="font-semibold text-slate-200">Shirou Emiya</p>
+        </div>
+        <div class="w-10 h-10 rounded-full border border-red-600/60 flex items-center justify-center bg-red-950/40 text-red-500 text-lg shadow-[0_0_10px_rgba(220,38,38,0.4)]">
+          <i class="fa-solid fa-ankh"></i>
+        </div>
+        <div class="text-center">
+          <p class="text-[10px] text-slate-400 uppercase">Alignment</p>
+          <p class="font-semibold text-slate-200">Lawful Good</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">Strength (力量)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">B</span>
+        </div>
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">Endurance (耐久)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">B</span>
+        </div>
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">Agility (敏捷)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">A</span>
+        </div>
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">Mana (魔力)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">A</span>
+        </div>
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">Luck (幸运)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">A+</span>
+        </div>
+        <div class="p-2 rounded bg-slate-900/60 border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400">N. Phantasm (宝具)</span>
+          <span class="font-cinzel font-bold text-saberGold text-sm">A++</span>
+        </div>
+      </div>
+
+      <!-- Noble Phantasm Section -->
+      <div class="fate-card-gold p-3 rounded-lg space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="font-cinzel font-bold text-saberGold text-xs tracking-wider">NOBLE PHANTASM</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-saberGold/20 text-saberGold">Anti-Fortress</span>
+        </div>
+        <p class="font-cinzel font-bold text-sm text-slate-100">Excalibur (誓约胜利之剑)</p>
+        <p class="text-[11px] text-slate-300 leading-tight pt-1">
+          The holy sword that converts the mana of the wielder into light, releasing a destructive divine beam of energy.
+        </p>
+      </div>
+
+      <!-- Figure Info -->
+      <div class="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <p><i class="fa-solid fa-box text-saberGold mr-1"></i> <strong class="text-slate-300">Scale:</strong> 1/7 Scale Painted Figure</p>
+        <p><i class="fa-solid fa-palette text-saberGold mr-1"></i> <strong class="text-slate-300">Material:</strong> Custom PBR Shaders / Metal & Satin</p>
+        <p><i class="fa-solid fa-eye text-saberGold mr-1"></i> <strong class="text-slate-300">Pose:</strong> Dynamic Battle Readiness Stance</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT CONTROL PANEL -->
+  <aside class="absolute top-20 right-4 z-20 w-80 max-h-[calc(100vh-6rem)] overflow-y-auto fate-card rounded-xl p-4">
+    <div class="flex items-center justify-between pb-3 border-b border-saberGold/20 mb-3">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-sliders text-saberGold"></i>
+        <h2 class="font-cinzel text-sm font-bold text-saberGold tracking-wide">EXHIBITION CONTROLS</h2>
+      </div>
+    </div>
+
+    <div class="space-y-4 text-xs">
+      
+      <!-- Noble Phantasm Ultimate FX Toggle Button -->
+      <div>
+        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Special FX / Noble Phantasm</label>
+        <button id="btn-excalibur-fx" class="fate-btn w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-saberGold to-amber-500 text-slate-950 font-cinzel font-bold tracking-wider text-sm flex items-center justify-center gap-2 shadow-lg transition-all">
+          <i class="fa-solid fa-bolt text-slate-950"></i>
+          <span>RELEASE EXCALIBUR!</span>
+        </button>
+      </div>
+
+      <!-- Secondary FX Toggles -->
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-invisible-air" class="fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 hover:text-white text-left flex items-center gap-2">
+          <i class="fa-solid fa-wind text-cyan-400"></i>
+          <span>Invisible Air</span>
+        </button>
+        <button id="btn-magic-circle" class="fate-btn p-2 rounded-lg border border-saberGold/40 bg-saberGold/10 text-saberGold text-left flex items-center gap-2">
+          <i class="fa-solid fa-circle-notch text-saberGold animate-spin-slow"></i>
+          <span>Summon Circle</span>
+        </button>
+      </div>
+
+      <!-- Camera Presets -->
+      <div>
+        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Camera Views</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button data-cam="hero" class="cam-preset-btn fate-btn p-2 rounded-lg border border-saberGold/40 bg-saberGold/20 text-saberGold text-left font-medium">
+            <i class="fa-solid fa-user-ninja mr-1"></i> Full Figure
+          </button>
+          <button data-cam="portrait" class="cam-preset-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+            <i class="fa-solid fa-user mr-1"></i> Portrait Focus
+          </button>
+          <button data-cam="sword" class="cam-preset-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Excalibur Focus
+          </button>
+          <button data-cam="armor" class="cam-preset-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+            <i class="fa-solid fa-shield-halved mr-1"></i> Cuirass Detail
+          </button>
+        </div>
+        <button id="btn-autorotate" class="fate-btn w-full mt-2 p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate text-saberGold"></i>
+          <span>Auto-Rotate Showcase</span>
+        </button>
+      </div>
+
+      <!-- Material / Render Modes -->
+      <div>
+        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Render Inspection Mode</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button data-mode="pbr" class="render-mode-btn fate-btn p-2 rounded-lg border border-saberGold/40 bg-saberGold/20 text-saberGold text-center font-medium">
+            Standard PBR
+          </button>
+          <button data-mode="wireframe" class="render-mode-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+            Wireframe
+          </button>
+          <button data-mode="metallic" class="render-mode-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+            Metallic Map
+          </button>
+          <button data-mode="clay" class="render-mode-btn fate-btn p-2 rounded-lg border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+            Clay Sculpt
+          </button>
+        </div>
+      </div>
+
+      <!-- Environment & Lighting Controls -->
+      <div class="space-y-2 pt-2 border-t border-slate-800">
+        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Lighting Setup</label>
+        
+        <div>
+          <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+            <span>Key Spotlight Intensity</span>
+            <span id="val-light-key">3.5</span>
+          </div>
+          <input type="range" id="slider-key-light" min="0" max="8" step="0.2" value="3.5" class="w-full accent-saberGold bg-slate-800 rounded">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+            <span>Aura Glow Brightness</span>
+            <span id="val-sword-glow">1.0</span>
+          </div>
+          <input type="range" id="slider-sword-glow" min="0" max="3" step="0.1" value="1.0" class="w-full accent-saberGold bg-slate-800 rounded">
+        </div>
+
+        <div>
+          <label class="text-[10px] text-slate-400 block mb-1">Stage Theme</label>
+          <select id="select-bg-theme" class="w-full p-2 rounded border border-slate-700 bg-slate-900 text-slate-200 text-xs outline-none">
+            <option value="darkMarble">Dark Marble Exhibition (Reference Studio)</option>
+            <option value="fateSanctuary">Fate Summoning Temple (Blue Glow)</option>
+            <option value="goldAura">Golden Camelot Realm</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- CUSTOM MODEL UPLOAD MODAL -->
+  <div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
+    <div class="fate-card w-11/12 max-w-md p-6 rounded-2xl relative space-y-4">
+      <button id="btn-close-upload" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      
+      <div class="text-center space-y-1">
+        <i class="fa-solid fa-box-open text-3xl text-saberGold mb-2"></i>
+        <h3 class="font-cinzel text-lg font-bold text-saberGold">Load Your Saber 3D Model</h3>
+        <p class="text-xs text-slate-300">Upload a custom <code class="text-saberGold">.glb</code> or <code class="text-saberGold">.gltf</code> 3D model file to display on the Saber exhibition stage.</p>
+      </div>
+
+      <div id="drop-zone" class="border-2 border-dashed border-saberGold/40 rounded-xl p-8 text-center bg-saberDarkBlue/30 hover:border-saberGold transition-colors cursor-pointer">
+        <i class="fa-solid fa-file-arrow-up text-3xl text-slate-400 mb-2"></i>
+        <p class="text-xs font-semibold text-slate-200">Drag & Drop your .GLB / .GLTF here</p>
+        <p class="text-[10px] text-slate-400 mt-1">or click to browse files</p>
+        <input type="file" id="file-input" accept=".glb,.gltf" class="hidden">
+      </div>
+
+      <div class="flex justify-end gap-2 text-xs">
+        <button id="btn-reset-model" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Restore Default Procedural Model</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- AUDIO SYNTHESIZER (Web Audio API) ---
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        }
+      }
+      playSwish() {
+        if (this.muted) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
+      }
+      playExcaliburRelease() {
+        if (this.muted) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        // Low rumble oscillator
+        const sub = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        sub.type = 'sawtooth';
+        sub.frequency.setValueAtTime(110, now);
+        sub.frequency.exponentialRampToValueAtTime(440, now + 1.2);
+        subGain.gain.setValueAtTime(0.3, now);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        sub.connect(subGain);
+        subGain.connect(this.ctx.destination);
+        sub.start();
+        sub.stop(now + 1.5);
+      }
+    }
+
+    const soundFX = new SoundManager();
+
+    // --- THREE.JS APPLICATION CORE ---
+    let scene, camera, renderer, controls;
+    let saberGroup, baseGroup, magicCircleMesh, excaliburMesh, excaliburAuraMesh, excaliburBeamMesh;
+    let particleSystem, particleGeo;
+    let keyLight, fillLight, rimLight, floorMesh;
+    let isExcaliburActive = false;
+    let isInvisibleAirActive = false;
+    let activeMaterials = []; // Track materials for render mode toggles
+    let currentLoadedModel = null;
+
+    // Camera Presets
+    const CAMERA_PRESETS = {
+      hero: { pos: { x: 0, y: 1.8, z: 4.8 }, target: { x: 0, y: 1.2, z: 0 } },
+      portrait: { pos: { x: 0, y: 2.3, z: 1.8 }, target: { x: 0, y: 2.2, z: 0 } },
+      sword: { pos: { x: 1.2, y: 1.6, z: 1.8 }, target: { x: 1.0, y: 1.4, z: 0 } },
+      armor: { pos: { x: 0, y: 1.6, z: 1.5 }, target: { x: 0, y: 1.6, z: 0 } }
+    };
+
+    // Initialize Application on Window Load
+    window.onload = function() {
+      initScene();
+      buildStageEnvironment();
+      buildProceduralSaberFigure();
+      buildParticleFX();
+      setupEventListeners();
+      animate();
+
+      // Fade out loading screen
+      setTimeout(() => {
+        const loader = document.getElementById('loading-screen');
+        loader.classList.add('opacity-0');
+        setTimeout(() => loader.style.display = 'none', 700);
+      }, 600);
+    };
+
+    // --- SCENE SETUP ---
+    function initScene() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x090d16);
+      scene.fog = new THREE.FogExp2(0x090d16, 0.08);
+
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+      camera.position.set(CAMERA_PRESETS.hero.pos.x, CAMERA_PRESETS.hero.pos.y, CAMERA_PRESETS.hero.pos.z);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.05; // Don't go below ground
+      controls.minDistance = 1.0;
+      controls.maxDistance = 10.0;
+      controls.target.set(0, 1.2, 0);
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    // --- STAGE & LIGHTING ---
+    function buildStageEnvironment() {
+      // 1. Glossy Dark Marble Exhibition Floor
+      const floorGeo = new THREE.CircleGeometry(6, 64);
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: 0x111625,
+        roughness: 0.15,
+        metalness: 0.85,
+      });
+      floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      scene.add(floorMesh);
+
+      // 2. Exhibition Display Base Stand (Glossy Acrylic with Gold Edge)
+      baseGroup = new THREE.Group();
+      
+      const baseCylinderGeo = new THREE.CylinderGeometry(1.6, 1.7, 0.15, 64);
+      const baseCylinderMat = new THREE.MeshStandardMaterial({
+        color: 0x050811,
+        roughness: 0.1,
+        metalness: 0.9,
+      });
+      const baseCylinder = new THREE.Mesh(baseCylinderGeo, baseCylinderMat);
+      baseCylinder.position.y = 0.075;
+      baseCylinder.receiveShadow = true;
+      baseCylinder.castShadow = true;
+      baseGroup.add(baseCylinder);
+
+      // Gold Trim Ring for Base
+      const ringGeo = new THREE.TorusGeometry(1.65, 0.02, 16, 64);
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.9, roughness: 0.2 });
+      const ringMesh = new THREE.Mesh(ringGeo, goldMat);
+      ringMesh.rotation.x = Math.PI / 2;
+      ringMesh.position.y = 0.14;
+      baseGroup.add(ringMesh);
+
+      // 3. Glowing Magic Circle Canvas Texture Overlay
+      const magicCircleCanvas = createMagicCircleCanvas();
+      const magicTexture = new THREE.CanvasTexture(magicCircleCanvas);
+      
+      const magicGeo = new THREE.PlaneGeometry(3.0, 3.0);
+      const magicMat = new THREE.MeshBasicMaterial({
+        map: magicTexture,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      magicCircleMesh = new THREE.Mesh(magicGeo, magicMat);
+      magicCircleMesh.rotation.x = -Math.PI / 2;
+      magicCircleMesh.position.y = 0.155;
+      baseGroup.add(magicCircleMesh);
+
+      scene.add(baseGroup);
+
+      // 4. Lighting System
+      // Ambient Light
+      const ambientLight = new THREE.AmbientLight(0xdce6ff, 0.7);
+      scene.add(ambientLight);
+
+      // Key Studio Spotlight (Main Shadow Caster)
+      keyLight = new THREE.SpotLight(0xfff5ea, 3.5);
+      keyLight.position.set(3, 5, 4);
+      keyLight.angle = Math.PI / 4;
+      keyLight.penumbra = 0.6;
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.bias = -0.0001;
+      scene.add(keyLight);
+
+      // Cool Blue Fill Light
+      fillLight = new THREE.DirectionalLight(0x3b82f6, 1.2);
+      fillLight.position.set(-4, 3, -2);
+      scene.add(fillLight);
+
+      // Gold Rim Light (Creates beautiful outline on armor and hair)
+      rimLight = new THREE.DirectionalLight(0xf59e0b, 2.5);
+      rimLight.position.set(0, 4, -4);
+      scene.add(rimLight);
+    }
+
+    // --- PROCEDURAL MAGIC CIRCLE TEXTURE GENERATOR ---
+    function createMagicCircleCanvas() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+      const cx = 512, cy = 512;
+
+      ctx.clearRect(0, 0, 1024, 1024);
+      ctx.strokeStyle = '#ffd700';
+      ctx.fillStyle = '#ffd700';
+
+      // Outer Ring
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 480, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 460, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Inner Concentric Circles
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 320, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 180, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 12-Point Magic Star / Geometry
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 12; i++) {
+        const angle = (i * Math.PI) / 6;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(angle) * 320, cy + Math.sin(angle) * 320);
+        ctx.lineTo(cx + Math.cos(angle + Math.PI * 0.66) * 320, cy + Math.sin(angle + Math.PI * 0.66) * 320);
+        ctx.stroke();
+      }
+
+      // Command Seal Center Emblem (Saber Feather/Sword Motif)
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.lineWidth = 5;
+      for (let r = 0; r < 3; r++) {
+        ctx.rotate((Math.PI * 2) / 3);
+        ctx.beginPath();
+        ctx.moveTo(0, -20);
+        ctx.quadraticCurveTo(60, -80, 20, -140);
+        ctx.quadraticCurveTo(0, -90, 0, -20);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      return canvas;
+    }
+
+    // --- PROCEDURAL SABER 3D MODEL GENERATOR ---
+    // Faithfully models Artoria's figure pose from the reference photo!
+    function buildProceduralSaberFigure() {
+      saberGroup = new THREE.Group();
+      saberGroup.position.y = 0.15; // Mount on top of display base
+
+      // Shared High-End PBR Materials
+      const armorMat = new THREE.MeshStandardMaterial({
+        color: 0xe2e8f0,
+        metalness: 0.95,
+        roughness: 0.15,
+        name: 'Armor'
+      });
+
+      const goldTrimMat = new THREE.MeshStandardMaterial({
+        color: 0xf39c12,
+        metalness: 0.85,
+        roughness: 0.2,
+        name: 'GoldTrim'
+      });
+
+      const royalBlueDressMat = new THREE.MeshStandardMaterial({
+        color: 0x1d4ed8,
+        roughness: 0.6,
+        metalness: 0.1,
+        name: 'RoyalBlueDress'
+      });
+
+      const darkBlueDressMat = new THREE.MeshStandardMaterial({
+        color: 0x1e3a8a,
+        roughness: 0.6,
+        metalness: 0.15,
+      });
+
+      const petticoatWhiteMat = new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        roughness: 0.85,
+        metalness: 0.05,
+      });
+
+      const skinMat = new THREE.MeshStandardMaterial({
+        color: 0xffdfd3,
+        roughness: 0.5,
+        metalness: 0.0,
+      });
+
+      const hairMat = new THREE.MeshStandardMaterial({
+        color: 0xfacc15,
+        roughness: 0.4,
+        metalness: 0.1,
+      });
+
+      activeMaterials = [armorMat, goldTrimMat, royalBlueDressMat, darkBlueDressMat, petticoatWhiteMat, skinMat, hairMat];
+
+      // 1. LEGS & BOOTS (Sabatons)
+      const legGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.7, 16);
+      const leftLeg = new THREE.Mesh(legGeo, armorMat);
+      leftLeg.position.set(-0.18, 0.35, 0);
+      leftLeg.castShadow = true;
+
+      const rightLeg = new THREE.Mesh(legGeo, armorMat);
+      rightLeg.position.set(0.18, 0.35, 0);
+      rightLeg.castShadow = true;
+      saberGroup.add(leftLeg, rightLeg);
+
+      // 2. INNER WHITE PETTICOAT (Flared multi-layered skirt with scalloped oval accents)
+      const petticoatGeo = new THREE.ConeGeometry(0.75, 0.9, 32, 1, true);
+      const petticoat = new THREE.Mesh(petticoatGeo, petticoatWhiteMat);
+      petticoat.position.y = 0.8;
+      petticoat.castShadow = true;
+      saberGroup.add(petticoat);
+
+      // Scalloped Golden Oval Details on Bottom Hem (Matching Reference Image)
+      for (let i = 0; i < 18; i++) {
+        const angle = (i / 18) * Math.PI * 2;
+        const ovalGeo = new THREE.SphereGeometry(0.035, 8, 16);
+        ovalGeo.scale(1, 1.8, 0.3);
+        const oval = new THREE.Mesh(ovalGeo, goldTrimMat);
+        oval.position.set(Math.cos(angle) * 0.73, 0.38, Math.sin(angle) * 0.73);
+        oval.rotation.y = -angle;
+        saberGroup.add(oval);
+      }
+
+      // 3. OUTER ROYAL BLUE DRESS SKIRT (Split-open front flare)
+      const skirtLeftGeo = new THREE.CylinderGeometry(0.35, 0.7, 0.8, 16, 1, true, Math.PI * 0.1, Math.PI * 0.8);
+      const skirtLeft = new THREE.Mesh(skirtLeftGeo, royalBlueDressMat);
+      skirtLeft.position.y = 0.85;
+      skirtLeft.castShadow = true;
+
+      const skirtRightGeo = new THREE.CylinderGeometry(0.35, 0.7, 0.8, 16, 1, true, Math.PI * 1.1, Math.PI * 0.8);
+      const skirtRight = new THREE.Mesh(skirtRightGeo, royalBlueDressMat);
+      skirtRight.position.y = 0.85;
+      skirtRight.castShadow = true;
+      saberGroup.add(skirtLeft, skirtRight);
+
+      // Skirt Gold Borders
+      const skirtBorderGeo = new THREE.TorusGeometry(0.68, 0.015, 8, 32, Math.PI * 0.8);
+      const borderLeft = new THREE.Mesh(skirtBorderGeo, goldTrimMat);
+      borderLeft.position.y = 0.46;
+      borderLeft.rotation.x = Math.PI / 2;
+      borderLeft.rotation.z = Math.PI * 0.1;
+      saberGroup.add(borderLeft);
+
+      // 4. HIP TASSETS / FAULDS (Metallic Silver Side Armor Plates over Skirt)
+      for (let dir of [-1, 1]) {
+        const tassetGroup = new THREE.Group();
+        const plateGeo = new THREE.BoxGeometry(0.3, 0.5, 0.04);
+        const plate = new THREE.Mesh(plateGeo, armorMat);
+        plate.castShadow = true;
+        
+        const plateTrim = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.03, 0.05), goldTrimMat);
+        plateTrim.position.y = -0.24;
+
+        tassetGroup.add(plate, plateTrim);
+        tassetGroup.position.set(dir * 0.38, 0.95, 0);
+        tassetGroup.rotation.z = -dir * 0.3; // Flared outwards
+        saberGroup.add(tassetGroup);
+      }
+
+      // 5. TORSO & BREASTPLATE (Cuirass with Blue Crest Lines)
+      const waistGeo = new THREE.CylinderGeometry(0.22, 0.28, 0.35, 16);
+      const waist = new THREE.Mesh(waistGeo, darkBlueDressMat);
+      waist.position.y = 1.25;
+      saberGroup.add(waist);
+
+      // Metallic Silver Breastplate (Cuirass)
+      const breastplateGeo = new THREE.SphereGeometry(0.26, 16, 16);
+      breastplateGeo.scale(1.1, 1.2, 0.85);
+      const breastplate = new THREE.Mesh(breastplateGeo, armorMat);
+      breastplate.position.set(0, 1.52, 0.02);
+      breastplate.castShadow = true;
+      saberGroup.add(breastplate);
+
+      // Gold Emblems & Trim on Cuirass
+      const chestEmblemGeo = new THREE.TorusGeometry(0.12, 0.012, 8, 16, Math.PI);
+      const chestEmblem = new THREE.Mesh(chestEmblemGeo, goldTrimMat);
+      chestEmblem.position.set(0, 1.55, 0.22);
+      chestEmblem.rotation.x = -0.2;
+      saberGroup.add(chestEmblem);
+
+      // 6. ARMS, PAULDRONS & GAUNTLETS
+      // Pauldrons (Shoulder Armor)
+      for (let dir of [-1, 1]) {
+        const pauldronGeo = new THREE.SphereGeometry(0.15, 12, 12, 0, Math.PI * 2, 0, Math.PI * 0.6);
+        const pauldron = new THREE.Mesh(pauldronGeo, armorMat);
+        pauldron.position.set(dir * 0.32, 1.68, 0);
+        pauldron.rotation.z = -dir * 0.4;
+        pauldron.castShadow = true;
+        saberGroup.add(pauldron);
+      }
+
+      // Left Arm (Lowered to Left Side with Gauntlet)
+      const leftArmGroup = new THREE.Group();
+      const upperArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.3), royalBlueDressMat);
+      upperArmL.position.y = -0.15;
+      const gauntletL = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.35), armorMat);
+      gauntletL.position.y = -0.45;
+      leftArmGroup.add(upperArmL, gauntletL);
+      leftArmGroup.position.set(-0.35, 1.65, 0);
+      leftArmGroup.rotation.z = 0.35;
+      leftArmGroup.rotation.x = 0.2;
+      saberGroup.add(leftArmGroup);
+
+      // Right Arm (Extended Outwards to hold Excalibur - Matching Pose)
+      const rightArmGroup = new THREE.Group();
+      const upperArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.3), royalBlueDressMat);
+      upperArmR.position.y = -0.15;
+      const gauntletR = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.35), armorMat);
+      gauntletR.position.y = -0.45;
+      rightArmGroup.add(upperArmR, gauntletR);
+      rightArmGroup.position.set(0.35, 1.65, 0);
+      rightArmGroup.rotation.z = -0.8; // Extended out
+      rightArmGroup.rotation.x = -0.4; // Forward right
+      saberGroup.add(rightArmGroup);
+
+      // 7. HEAD, HAIR & AHOGE
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 1.88, 0);
+
+      // Head Mesh
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 20), skinMat);
+      headGroup.add(headMesh);
+
+      // Anime Eye Feature Planes
+      const eyeGeo = new THREE.PlaneGeometry(0.04, 0.05);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x059669 }); // Emerald Green Saber Eyes
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.06, 0.01, 0.155);
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.06, 0.01, 0.155);
+      headGroup.add(leftEye, rightEye);
+
+      // Blonde Hair Bun & Bangs
+      const hairBun = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), hairMat);
+      hairBun.position.set(0, 0.08, -0.12);
+      headGroup.add(hairBun);
+
+      // Blue Hair Ribbon at Back
+      const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.04), darkBlueDressMat);
+      ribbon.position.set(0, 0.08, -0.2);
+      headGroup.add(ribbon);
+
+      // Signature Ahoge (Cowlick Strand on top of head)
+      const ahogeCurve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(0, 0.16, 0),
+        new THREE.Vector3(0.05, 0.32, 0.05),
+        new THREE.Vector3(0.02, 0.38, -0.02)
+      );
+      const ahogeGeo = new THREE.TubeGeometry(ahogeCurve, 12, 0.012, 8, false);
+      const ahoge = new THREE.Mesh(ahogeGeo, hairMat);
+      headGroup.add(ahoge);
+
+      saberGroup.add(headGroup);
+
+      // 8. EXCALIBUR (HOLY SWORD OF PROMISED VICTORY)
+      buildExcaliburSword(rightArmGroup);
+
+      scene.add(saberGroup);
+      currentLoadedModel = saberGroup;
+    }
+
+    // --- BUILD EXCALIBUR SWORD & FX ---
+    function buildExcaliburSword(parentArm) {
+      excaliburMesh = new THREE.Group();
+
+      const bladeMat = new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        metalness: 0.98,
+        roughness: 0.1,
+        name: 'ExcaliburBlade'
+      });
+
+      const hiltGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        metalness: 0.9,
+        roughness: 0.2
+      });
+
+      const hiltBlueMat = new THREE.MeshStandardMaterial({
+        color: 0x1d4ed8,
+        metalness: 0.4,
+        roughness: 0.3
+      });
+
+      // Hilt & Grip
+      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 12), hiltBlueMat);
+      grip.position.y = -0.11;
+
+      const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), hiltGoldMat);
+      pommel.position.y = -0.23;
+
+      // Golden Winged Crossguard
+      const guardGeo = new THREE.BoxGeometry(0.28, 0.04, 0.06);
+      const guard = new THREE.Mesh(guardGeo, hiltGoldMat);
+      guard.position.y = 0.02;
+
+      // Metallic Blade
+      const bladeGeo = new THREE.BoxGeometry(0.06, 1.1, 0.015);
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.position.y = 0.58;
+      blade.castShadow = true;
+
+      // Blue Inlay Center Strip
+      const inlayGeo = new THREE.BoxGeometry(0.015, 0.9, 0.018);
+      const inlay = new THREE.Mesh(inlayGeo, hiltBlueMat);
+      inlay.position.y = 0.55;
+
+      excaliburMesh.add(grip, pommel, guard, blade, inlay);
+
+      // --- EXCALIBUR NOBLE PHANTASM GLOW MESHES ---
+      // Glowing Aura Blade Mesh
+      const auraGeo = new THREE.BoxGeometry(0.12, 1.18, 0.08);
+      const auraMat = new THREE.MeshBasicMaterial({
+        color: 0xffd700,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending
+      });
+      excaliburAuraMesh = new THREE.Mesh(auraGeo, auraMat);
+      excaliburAuraMesh.position.y = 0.58;
+      excaliburMesh.add(excaliburAuraMesh);
+
+      // Vertical Pillar Light Beam
+      const beamGeo = new THREE.CylinderGeometry(0.15, 0.4, 8, 32, 1, true);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0xffd700,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+      });
+      excaliburBeamMesh = new THREE.Mesh(beamGeo, beamMat);
+      excaliburBeamMesh.position.y = 4.0;
+      excaliburMesh.add(excaliburBeamMesh);
+
+      // Attach Sword to Gauntlet Hand Position
+      excaliburMesh.position.set(0, -0.62, 0.05);
+      excaliburMesh.rotation.x = Math.PI / 2;
+      excaliburMesh.rotation.z = -0.2;
+      parentArm.add(excaliburMesh);
+    }
+
+    // --- PARTICLE FX SYSTEM ---
+    function buildParticleFX() {
+      const particleCount = 250;
+      particleGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const scales = new Float32Array(particleCount);
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 6;
+        positions[i * 3 + 1] = Math.random() * 4;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+        scales[i] = Math.random() * 0.04 + 0.01;
+      }
+
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const particleMat = new THREE.PointsMaterial({
+        color: 0xffd700,
+        size: 0.05,
+        transparent: true,
+        opacity: 0.6,
+        blending: THREE.AdditiveBlending
+      });
+
+      particleSystem = new THREE.Points(particleGeo, particleMat);
+      scene.add(particleSystem);
+    }
+
+    // --- INTERACTIVE EVENT LISTENERS & UI ---
+    function setupEventListeners() {
+      // Noble Phantasm "Excalibur!" Toggle
+      const excaliburBtn = document.getElementById('btn-excalibur-fx');
+      excaliburBtn.addEventListener('click', toggleExcaliburFX);
+
+      // Invisible Air Toggle
+      document.getElementById('btn-invisible-air').addEventListener('click', function() {
+        isInvisibleAirActive = !isInvisibleAirActive;
+        this.classList.toggle('border-cyan-400');
+        this.classList.toggle('bg-cyan-950/40');
+        soundFX.playSwish();
+      });
+
+      // Magic Circle Toggle
+      document.getElementById('btn-magic-circle').addEventListener('click', function() {
+        magicCircleMesh.visible = !magicCircleMesh.visible;
+        this.classList.toggle('border-saberGold');
+        soundFX.playSwish();
+      });
+
+      // Camera Presets
+      document.querySelectorAll('.cam-preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const presetKey = this.getAttribute('data-cam');
+          if (CAMERA_PRESETS[presetKey]) {
+            moveCameraTo(CAMERA_PRESETS[presetKey]);
+            soundFX.playSwish();
+          }
+        });
+      });
+
+      // Auto-rotate Toggle
+      document.getElementById('btn-autorotate').addEventListener('click', function() {
+        controls.autoRotate = !controls.autoRotate;
+        controls.autoRotateSpeed = 2.0;
+        this.classList.toggle('border-saberGold');
+        this.classList.toggle('bg-saberGold/20');
+      });
+
+      // Render Inspection Modes
+      document.querySelectorAll('.render-mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const mode = this.getAttribute('data-mode');
+          setRenderMode(mode);
+          document.querySelectorAll('.render-mode-btn').forEach(b => {
+            b.classList.remove('border-saberGold', 'bg-saberGold/20', 'text-saberGold');
+            b.classList.add('border-slate-700', 'text-slate-300');
+          });
+          this.classList.add('border-saberGold', 'bg-saberGold/20', 'text-saberGold');
+        });
+      });
+
+      // Lighting Sliders
+      document.getElementById('slider-key-light').addEventListener('input', (e) => {
+        keyLight.intensity = parseFloat(e.target.value);
+        document.getElementById('val-light-key').innerText = e.target.value;
+      });
+
+      document.getElementById('slider-sword-glow').addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (excaliburAuraMesh) excaliburAuraMesh.material.opacity = isExcaliburActive ? val * 0.8 : 0;
+        document.getElementById('val-sword-glow').innerText = e.target.value;
+      });
+
+      // Stage Theme Select
+      document.getElementById('select-bg-theme').addEventListener('change', (e) => {
+        const theme = e.target.value;
+        if (theme === 'darkMarble') {
+          scene.background.setHex(0x090d16);
+          scene.fog.color.setHex(0x090d16);
+          floorMesh.material.color.setHex(0x111625);
+          rimLight.color.setHex(0xf59e0b);
+        } else if (theme === 'fateSanctuary') {
+          scene.background.setHex(0x021329);
+          scene.fog.color.setHex(0x021329);
+          floorMesh.material.color.setHex(0x0a2540);
+          rimLight.color.setHex(0x38bdf8);
+        } else if (theme === 'goldAura') {
+          scene.background.setHex(0x1a1202);
+          scene.fog.color.setHex(0x1a1202);
+          floorMesh.material.color.setHex(0x2d2006);
+          rimLight.color.setHex(0xfacc15);
+        }
+      });
+
+      // Drawer Toggles
+      document.getElementById('btn-info-toggle').addEventListener('click', () => {
+        document.getElementById('stats-drawer').classList.remove('-translate-x-full');
+      });
+      document.getElementById('btn-close-drawer').addEventListener('click', () => {
+        document.getElementById('stats-drawer').classList.add('-translate-x-full');
+      });
+
+      // Audio Mute Toggle
+      document.getElementById('btn-audio-toggle').addEventListener('click', function() {
+        soundFX.muted = !soundFX.muted;
+        const icon = document.getElementById('audio-icon');
+        icon.className = soundFX.muted ? 'fa-solid fa-volume-xmark text-slate-500' : 'fa-solid fa-volume-high text-saberGold';
+      });
+
+      // 1-Click Snapshot / Screenshot Export
+      document.getElementById('btn-screenshot').addEventListener('click', takeSnapshot);
+
+      // Custom GLTF Upload Modal Handlers
+      setupUploadModal();
+    }
+
+    // --- NOBLE PHANTASM ACTIVATION TRIGGER ---
+    function toggleExcaliburFX() {
+      isExcaliburActive = !isExcaliburActive;
+      const btn = document.getElementById('btn-excalibur-fx');
+
+      if (isExcaliburActive) {
+        btn.classList.add('excalibur-active-glow');
+        soundFX.playExcaliburRelease();
+
+        // Animate aura and pillar light
+        gsap.to(excaliburAuraMesh.material, { opacity: 0.85, duration: 0.6 });
+        gsap.to(excaliburBeamMesh.material, { opacity: 0.6, duration: 0.8 });
+        gsap.to(keyLight, { intensity: 7.0, duration: 0.4, yoyo: true, repeat: 1 });
+
+        // Rapid particle burst
+        const pos = particleGeo.attributes.position.array;
+        for (let i = 0; i < pos.length; i += 3) {
+          pos[i] = (Math.random() - 0.5) * 2;
+          pos[i + 1] = Math.random() * 5;
+          pos[i + 2] = (Math.random() - 0.5) * 2;
+        }
+        particleGeo.attributes.position.needsUpdate = true;
+      } else {
+        btn.classList.remove('excalibur-active-glow');
+        gsap.to(excaliburAuraMesh.material, { opacity: 0, duration: 0.5 });
+        gsap.to(excaliburBeamMesh.material, { opacity: 0, duration: 0.5 });
+      }
+    }
+
+    // --- CAMERA MOTION TWEEN ---
+    function moveCameraTo(targetPreset) {
+      gsap.to(camera.position, {
+        x: targetPreset.pos.x,
+        y: targetPreset.pos.y,
+        z: targetPreset.pos.z,
+        duration: 1.2,
+        ease: 'power2.inOut'
+      });
+      gsap.to(controls.target, {
+        x: targetPreset.target.x,
+        y: targetPreset.target.y,
+        z: targetPreset.target.z,
+        duration: 1.2,
+        ease: 'power2.inOut'
+      });
+    }
+
+    // --- RENDER MODE SWITCHER ---
+    function setRenderMode(mode) {
+      activeMaterials.forEach(mat => {
+        if (mode === 'wireframe') {
+          mat.wireframe = true;
+        } else {
+          mat.wireframe = false;
+          if (mode === 'clay') {
+            mat.roughness = 0.9;
+            mat.metalness = 0.0;
+          } else if (mode === 'metallic') {
+            mat.roughness = 0.1;
+            mat.metalness = 1.0;
+          } else { // PBR Default
+            if (mat.name === 'Armor') { mat.metalness = 0.95; mat.roughness = 0.15; }
+            if (mat.name === 'RoyalBlueDress') { mat.metalness = 0.1; mat.roughness = 0.6; }
+          }
+        }
+      });
+    }
+
+    // --- SNAPSHOT EXPORT ---
+    function takeSnapshot() {
+      renderer.render(scene, camera);
+      const dataURL = renderer.domElement.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'Artoria_Saber_3D_Showcase.png';
+      link.href = dataURL;
+      link.click();
+    }
+
+    // --- MODEL UPLOAD MODAL LOGIC ---
+    function setupUploadModal() {
+      const modal = document.getElementById('upload-modal');
+      const trigger = document.getElementById('btn-upload-trigger');
+      const close = document.getElementById('btn-close-upload');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+
+      trigger.addEventListener('click', () => modal.classList.remove('hidden'));
+      close.addEventListener('click', () => modal.classList.add('hidden'));
+
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+      });
+
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-saberGold'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-saberGold'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-saberGold');
+        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+      });
+
+      document.getElementById('btn-reset-model').addEventListener('click', () => {
+        if (currentLoadedModel) scene.remove(currentLoadedModel);
+        buildProceduralSaberFigure();
+        modal.classList.add('hidden');
+      });
+    }
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = function(e) {
+        const loader = new THREE.GLTFLoader();
+        loader.parse(e.target.result, '', (gltf) => {
+          if (currentLoadedModel) scene.remove(currentLoadedModel);
+          currentLoadedModel = gltf.scene;
+          
+          // Auto center and scale model
+          const box = new THREE.Box3().setFromObject(currentLoadedModel);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 2.2 / maxDim;
+          currentLoadedModel.scale.set(scale, scale, scale);
+          currentLoadedModel.position.y = 0.15;
+
+          scene.add(currentLoadedModel);
+          document.getElementById('upload-modal').classList.add('hidden');
+        });
+      };
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- MAIN ANIMATION LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      controls.update();
+
+      // Rotate magic circle on base
+      if (magicCircleMesh && magicCircleMesh.visible) {
+        magicCircleMesh.rotation.z += 0.003;
+      }
+
+      // Floating Particle Physics
+      if (particleSystem) {
+        const positions = particleGeo.attributes.position.array;
+        for (let i = 1; i < positions.length; i += 3) {
+          positions[i] += isExcaliburActive ? 0.03 : 0.005;
+          if (positions[i] > 5) positions[i] = 0;
+        }
+        particleGeo.attributes.position.needsUpdate = true;
+      }
+
+      // Invisible Air Wind Effect Animation
+      if (isInvisibleAirActive && excaliburMesh) {
+        excaliburMesh.rotation.y += 0.2;
+      }
+
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>

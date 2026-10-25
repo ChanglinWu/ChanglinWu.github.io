@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Asset Exhibition Studio - Real GLTF/GLB Showcase</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js & Essential Loaders -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['Space Grotesk', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            studioDark: '#080c14',
+            studioPanel: 'rgba(15, 23, 42, 0.85)',
+            cyberBlue: '#38bdf8',
+            cyberGold: '#fbbf24',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #080c14;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-studio {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-studio:hover {
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-studio:active {
+      transform: translateY(1px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.4);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-100 antialiased h-screen w-screen relative">
+
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container" class="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing"></div>
+
+  <!-- Loading Overlay with Progress Bar -->
+  <div id="loading-overlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md transition-opacity duration-500">
+    <div class="w-80 glass-panel p-6 rounded-2xl flex flex-col items-center space-y-4 border border-cyan-500/30">
+      <div class="relative flex items-center justify-center">
+        <div class="w-16 h-16 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin"></div>
+        <i class="fa-solid fa-cube text-cyan-400 text-xl absolute"></i>
+      </div>
+      <div class="text-center">
+        <h2 id="loading-model-name" class="font-mono text-sm font-bold text-slate-100 tracking-wider">LOADING MODEL</h2>
+        <p id="loading-status-text" class="text-[11px] text-slate-400 mt-1">Fetching GLTF binary stream...</p>
+      </div>
+      <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+        <div id="loading-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full w-0 transition-all duration-200"></div>
+      </div>
+      <span id="loading-percentage" class="font-mono text-xs text-cyan-400 font-semibold">0%</span>
+    </div>
+  </div>
+
+  <!-- TOP HEADER & PRESET SELECTOR -->
+  <header class="absolute top-0 left-0 right-0 z-20 p-4 pointer-events-none flex flex-col md:flex-row justify-between items-center gap-3 bg-gradient-to-b from-slate-950/90 to-transparent">
+    <div class="pointer-events-auto flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+        <i class="fa-solid fa-shapes text-cyan-400 text-lg"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">3D Asset Studio</span>
+          <span id="fps-counter" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-emerald-400 border border-emerald-500/30">60 FPS</span>
+        </div>
+        <h1 class="font-mono text-base font-bold text-slate-100 tracking-tight">Real GLTF/GLB Open-Source Showcase</h1>
+      </div>
+    </div>
+
+    <!-- Preset Selector Pills -->
+    <div class="pointer-events-auto flex items-center gap-1.5 overflow-x-auto max-w-full p-1.5 glass-panel rounded-xl">
+      <button data-model="robot" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+        <i class="fa-solid fa-robot"></i><span>Robot Expressive</span>
+      </button>
+      <button data-model="soldier" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700">
+        <i class="fa-solid fa-user-shield"></i><span>战术士兵</span>
+      </button>
+      <button data-model="xbot" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700">
+        <i class="fa-solid fa-person-rays"></i><span>Xbot 机甲</span>
+      </button>
+      <button data-model="flamingo" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700">
+        <i class="fa-solid fa-dove"></i><span>飞翔火烈鸟</span>
+      </button>
+      <button data-model="stork" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700">
+        <i class="fa-solid fa-crow"></i><span>天空鹳鸟</span>
+      </button>
+      <button data-model="iondrive" class="preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700">
+        <i class="fa-solid fa-rocket"></i><span>离子推进器</span>
+      </button>
+      <button id="btn-upload-trigger" title="Upload custom GLTF/GLB" class="btn-studio px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+        <i class="fa-solid fa-upload"></i><span>Custom .GLB</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- LEFT PANEL: MESH ANALYTICS & ANIMATION CONTROLLER -->
+  <aside id="left-panel" class="absolute top-24 left-4 z-20 w-80 max-h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-4 space-y-4">
+    
+    <!-- Analytics Section -->
+    <div>
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800 mb-3">
+        <span class="font-mono text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie"></i> Mesh Analytics
+        </span>
+        <span id="active-model-tag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">GLTF 2.0</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <span class="text-slate-400 text-[10px] block uppercase">Triangles</span>
+          <span id="stat-triangles" class="text-sm font-bold text-slate-100">0</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <span class="text-slate-400 text-[10px] block uppercase">Vertices</span>
+          <span id="stat-vertices" class="text-sm font-bold text-slate-100">0</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <span class="text-slate-400 text-[10px] block uppercase">Sub-Meshes</span>
+          <span id="stat-meshes" class="text-sm font-bold text-slate-100">0</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800">
+          <span class="text-slate-400 text-[10px] block uppercase">Animations</span>
+          <span id="stat-anim-count" class="text-sm font-bold text-slate-100">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animation Controller Section -->
+    <div id="anim-section" class="space-y-3 pt-2 border-t border-slate-800">
+      <div class="flex justify-between items-center">
+        <span class="font-mono text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-play"></i> Animation Clips
+        </span>
+        <button id="btn-play-pause" class="btn-studio w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center text-xs">
+          <i class="fa-solid fa-pause" id="play-icon"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] text-slate-400 font-mono uppercase block">Active Animation Clip</label>
+        <select id="select-animation" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 text-xs font-mono outline-none focus:border-cyan-500">
+          <option value="">No animations detected</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+          <span>Playback Speed</span>
+          <span id="val-speed">1.0x</span>
+        </div>
+        <input type="range" id="slider-speed" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full accent-cyan-400 bg-slate-800 rounded">
+      </div>
+    </div>
+
+    <!-- View & Inspection Modes -->
+    <div class="space-y-3 pt-2 border-t border-slate-800">
+      <span class="font-mono text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-eye"></i> Shader Inspection
+      </span>
+
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button data-shader="pbr" class="shader-btn btn-studio p-2 rounded-xl border border-cyan-500/40 bg-cyan-500/20 text-cyan-400 text-center font-medium">
+          Full PBR
+        </button>
+        <button data-shader="wireframe" class="shader-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+          Wireframe
+        </button>
+        <button data-shader="hologram" class="shader-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+          X-Ray Hologram
+        </button>
+        <button data-shader="clay" class="shader-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium">
+          Clay Sculpt
+        </button>
+        <button data-shader="metallic" class="shader-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium col-span-2">
+          Metallic & Roughness Map
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT PANEL: LIGHTING & CAMERA CONTROLS -->
+  <aside id="right-panel" class="absolute top-24 right-4 z-20 w-80 max-h-[calc(100vh-7rem)] overflow-y-auto glass-panel rounded-2xl p-4 space-y-4">
+    
+    <!-- Camera View Presets -->
+    <div class="space-y-3">
+      <span class="font-mono text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-video"></i> Camera Angles
+      </span>
+
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <button data-cam="full" class="cam-preset-btn btn-studio p-2 rounded-xl border border-cyan-500/40 bg-cyan-500/20 text-cyan-400 text-left font-medium">
+          <i class="fa-solid fa-expand mr-1"></i> Full View
+        </button>
+        <button data-cam="closeup" class="cam-preset-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+          <i class="fa-solid fa-magnifying-glass-plus mr-1"></i> Close-Up
+        </button>
+        <button data-cam="top" class="cam-preset-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+          <i class="fa-solid fa-arrows-up-to-line mr-1"></i> Top View
+        </button>
+        <button id="btn-auto-rotate" class="btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-left font-medium">
+          <i class="fa-solid fa-rotate mr-1"></i> Auto Orbit
+        </button>
+      </div>
+    </div>
+
+    <!-- Studio Environment & Lights -->
+    <div class="space-y-3 pt-2 border-t border-slate-800">
+      <span class="font-mono text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-lightbulb"></i> Studio Lighting
+      </span>
+
+      <div class="space-y-2">
+        <div>
+          <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+            <span>Key Spotlight Intensity</span>
+            <span id="val-light-key">3.0</span>
+          </div>
+          <input type="range" id="slider-key-light" min="0" max="6" step="0.2" value="3.0" class="w-full accent-cyan-400 bg-slate-800 rounded">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+            <span>Rim Light Brightness</span>
+            <span id="val-light-rim">2.0</span>
+          </div>
+          <input type="range" id="slider-rim-light" min="0" max="5" step="0.2" value="2.0" class="w-full accent-cyan-400 bg-slate-800 rounded">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 block mb-1">Background Studio Color</label>
+          <select id="select-bg-color" class="w-full p-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 text-xs font-mono outline-none">
+            <option value="cyberDark">Cyber Navy (#080c14)</option>
+            <option value="studioGrey">Neutral Studio Grey (#1e293b)</option>
+            <option value="pureBlack">OLED Pure Black (#000000)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-xs text-slate-300">Show Ground Grid</span>
+          <input type="checkbox" id="check-grid" checked class="accent-cyan-400 w-4 h-4 rounded">
+        </div>
+      </div>
+    </div>
+
+    <!-- Snapshot & Export -->
+    <div class="pt-2 border-t border-slate-800">
+      <button id="btn-snapshot" class="btn-studio w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-mono font-bold text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-camera"></i>
+        <span>CAPTURE HD SNAPSHOT</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- CUSTOM MODEL UPLOAD MODAL -->
+  <div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
+    <div class="glass-panel w-11/12 max-w-md p-6 rounded-2xl relative space-y-4 border border-cyan-500/30">
+      <button id="btn-close-upload" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      
+      <div class="text-center space-y-1">
+        <i class="fa-solid fa-cloud-arrow-up text-3xl text-cyan-400 mb-1"></i>
+        <h3 class="font-mono text-base font-bold text-slate-100">Upload Your Own 3D Asset</h3>
+        <p class="text-xs text-slate-400">Load local <code class="text-cyan-400">.glb</code> or <code class="text-cyan-400">.gltf</code> 3D models into the studio inspector.</p>
+      </div>
+
+      <div id="drop-zone" class="border-2 border-dashed border-cyan-500/40 rounded-xl p-8 text-center bg-slate-900/40 hover:border-cyan-400 transition-colors cursor-pointer">
+        <i class="fa-solid fa-cube text-2xl text-slate-400 mb-2"></i>
+        <p class="text-xs font-semibold text-slate-200">Drag & Drop your 3D model here</p>
+        <p class="text-[10px] text-slate-400 mt-1">Supports binary GLTF (.glb) and standard (.gltf)</p>
+        <input type="file" id="file-input" accept=".glb,.gltf" class="hidden">
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP ARCHITECTURE -->
+  <script>
+    // --- PRESET VERIFIED OPEN-SOURCE MODELS CONFIGURATION ---
+    const MODEL_PRESETS = {
+      robot: {
+        name: 'Robot Expressive',
+        subpath: 'RobotExpressive/RobotExpressive.glb',
+        tag: 'Rigged / 14 Animations'
+      },
+      soldier: {
+        name: '3D 战术士兵 (Soldier)',
+        subpath: 'Soldier.glb',
+        tag: 'Skeletal Action Rig'
+      },
+      xbot: {
+        name: '科幻机甲人形 (Xbot)',
+        subpath: 'Xbot.glb',
+        tag: 'Humanoid Animation Rig'
+      },
+      flamingo: {
+        name: '飞翔火烈鸟 (Flamingo)',
+        subpath: 'Flamingo.glb',
+        tag: 'Morph Target Flight'
+      },
+      stork: {
+        name: '天空鹳鸟 (Stork)',
+        subpath: 'Stork.glb',
+        tag: 'Morph Flight Sequence'
+      },
+      iondrive: {
+        name: '科幻离子推进器 (Ion Drive)',
+        subpath: 'PrimaryIonDrive.glb',
+        tag: 'PBR Mechanical Assembly'
+      }
+    };
+
+    // Multi-CDN Fallback Generator
+    function getCDNUrls(subpath) {
+      return [
+        `https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/${subpath}`,
+        `https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/models/gltf/${subpath}`,
+        `https://unpkg.com/three@0.160.0/examples/models/gltf/${subpath}`
+      ];
+    }
+
+    // --- GLOBAL APP STATE ---
+    let scene, camera, renderer, controls;
+    let keyLight, fillLight, rimLight, floorGrid, floorShadow;
+    let currentModelGroup = null;
+    let currentGltfData = null;
+    let mixer = null;
+    let animationActions = {};
+    let currentAction = null;
+    let isPlayingAnim = true;
+    let originalMaterials = new Map();
+    let clock = new THREE.Clock();
+
+    // Stats & FPS calculation
+    let frameCount = 0;
+    let lastTime = performance.now();
+
+    // Init App on Load
+    window.onload = function() {
+      initThreeScene();
+      setupEventListeners();
+      loadPresetModel('robot'); // Default initial model
+      animate();
+    };
+
+    // --- THREE.JS SCENE INITIALIZATION ---
+    function initThreeScene() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x080c14);
+      scene.fog = new THREE.FogExp2(0x080c14, 0.05);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 1.5, 4.5);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2 + 0.02; // Don't clip below floor
+      controls.target.set(0, 1.0, 0);
+
+      // Studio Lighting System
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      keyLight = new THREE.SpotLight(0xfff5ea, 3.0);
+      keyLight.position.set(3, 5, 4);
+      keyLight.angle = Math.PI / 4;
+      keyLight.penumbra = 0.5;
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.bias = -0.0001;
+      scene.add(keyLight);
+
+      fillLight = new THREE.DirectionalLight(0x38bdf8, 1.0);
+      fillLight.position.set(-4, 2, -2);
+      scene.add(fillLight);
+
+      rimLight = new THREE.DirectionalLight(0xfbbf24, 2.0);
+      rimLight.position.set(0, 4, -4);
+      scene.add(rimLight);
+
+      // Floor Grid & Shadow Plane
+      floorGrid = new THREE.GridHelper(20, 40, 0x38bdf8, 0x1e293b);
+      floorGrid.position.y = 0;
+      scene.add(floorGrid);
+
+      const shadowPlaneGeo = new THREE.PlaneGeometry(20, 20);
+      const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.4 });
+      floorShadow = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
+      floorShadow.rotation.x = -Math.PI / 2;
+      floorShadow.receiveShadow = true;
+      scene.add(floorShadow);
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    // --- GLTF MODEL LOADER WITH BULLETPROOF FALLBACKS ---
+    function loadPresetModel(presetKey) {
+      const preset = MODEL_PRESETS[presetKey];
+      if (!preset) return;
+
+      document.getElementById('loading-model-name').innerText = preset.name.toUpperCase();
+      document.getElementById('active-model-tag').innerText = preset.tag;
+      
+      // Highlight Active Preset Button UI
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.getAttribute('data-model') === presetKey) {
+          btn.className = 'preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/40';
+        } else {
+          btn.className = 'preset-btn btn-studio px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700';
+        }
+      });
+
+      const urls = getCDNUrls(preset.subpath);
+      loadWithFallback(urls, 0, presetKey);
+    }
+
+    function loadWithFallback(urls, index, presetKey) {
+      showLoading(true);
+      document.getElementById('loading-status-text').innerText = `Connecting CDN source ${index + 1}/${urls.length}...`;
+
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        urls[index],
+        (gltf) => {
+          processLoadedGLTF(gltf);
+          showLoading(false);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const percent = Math.round((xhr.loaded / xhr.total) * 100);
+            updateLoadingProgress(percent);
+          }
+        },
+        (error) => {
+          console.warn(`CDN ${index + 1} failed for ${presetKey}:`, error);
+          if (index + 1 < urls.length) {
+            loadWithFallback(urls, index + 1, presetKey);
+          } else {
+            // All CDNs failed -> Generate Procedural 3D Fallback Object so user never sees blank canvas
+            console.warn(`Generating procedural 3D fallback model for ${presetKey}`);
+            document.getElementById('loading-status-text').innerText = 'Generating High-Quality Procedural Model...';
+            setTimeout(() => {
+              const proceduralGltf = createProceduralFallback(presetKey);
+              processLoadedGLTF(proceduralGltf);
+              showLoading(false);
+            }, 300);
+          }
+        }
+      );
+    }
+
+    // --- PROCEDURAL 3D FALLBACK GENERATOR (GUARANTEES NO BROKEN CANVAS) ---
+    function createProceduralFallback(presetKey) {
+      const group = new THREE.Group();
+      
+      if (presetKey === 'iondrive' || presetKey === 'robot' || presetKey === 'xbot' || presetKey === 'soldier') {
+        // High-tech Cyber Core Engine / Mech
+        const coreGeo = new THREE.IcosahedronGeometry(0.8, 2);
+        const coreMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.8, roughness: 0.2, wireframe: false });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        coreMesh.position.y = 1.2;
+        group.add(coreMesh);
+
+        const ringGeo = new THREE.TorusGeometry(1.2, 0.08, 16, 100);
+        const ringMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.1 });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.position.y = 1.2;
+        ringMesh.rotation.x = Math.PI / 3;
+        group.add(ringMesh);
+
+        const baseGeo = new THREE.CylinderGeometry(1.0, 1.2, 0.4, 32);
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.3 });
+        const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+        baseMesh.position.y = 0.2;
+        group.add(baseMesh);
+      } else {
+        // Sculpted Bird Form
+        const bodyGeo = new THREE.ConeGeometry(0.6, 1.8, 16);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4 });
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        bodyMesh.rotation.z = -Math.PI / 3;
+        bodyMesh.position.y = 1.2;
+        group.add(bodyMesh);
+
+        const wingGeo = new THREE.BoxGeometry(2.0, 0.05, 0.6);
+        const wingMat = new THREE.MeshStandardMaterial({ color: 0xfb7185, roughness: 0.3 });
+        const wingMesh = new THREE.Mesh(wingGeo, wingMat);
+        wingMesh.position.set(0, 1.4, 0);
+        group.add(wingMesh);
+      }
+
+      return { scene: group, animations: [] };
+    }
+
+    function processLoadedGLTF(gltf) {
+      // Remove existing model if present
+      if (currentModelGroup) {
+        scene.remove(currentModelGroup);
+      }
+      if (mixer) {
+        mixer.stopAllAction();
+        mixer = null;
+      }
+
+      currentGltfData = gltf;
+      currentModelGroup = gltf.scene;
+
+      // 1. Normalize Scale and Center Position
+      normalizeModel(currentModelGroup);
+
+      // 2. Enable Shadows and Save Original Materials
+      originalMaterials.clear();
+      currentModelGroup.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          originalMaterials.set(child.uuid, child.material);
+        }
+      });
+
+      scene.add(currentModelGroup);
+
+      // 3. Setup Animations
+      setupAnimations(gltf);
+
+      // 4. Update Analytics Stats HUD
+      updateAnalytics(currentModelGroup, gltf.animations ? gltf.animations.length : 0);
+
+      // Reset camera view slightly
+      controls.target.set(0, 1.0, 0);
+    }
+
+    function normalizeModel(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      // Re-center horizontally
+      model.position.x -= center.x;
+      model.position.z -= center.z;
+
+      // Calculate scale to normalize model height to ~2.2 units
+      const maxDim = Math.max(size.x, size.y, size.z);
+      if (maxDim > 0) {
+        const scale = 2.2 / maxDim;
+        model.scale.set(scale, scale, scale);
+      }
+
+      // Re-align bottom of model precisely to ground y=0
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      model.position.y = -scaledBox.min.y;
+    }
+
+    // --- ANIMATION CONTROLLER ---
+    function setupAnimations(gltf) {
+      const select = document.getElementById('select-animation');
+      select.innerHTML = '';
+      animationActions = {};
+      currentAction = null;
+
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(gltf.scene);
+
+        gltf.animations.forEach((clip, index) => {
+          const action = mixer.clipAction(clip);
+          animationActions[clip.name] = action;
+
+          const option = document.createElement('option');
+          option.value = clip.name;
+          option.innerText = clip.name || `Clip #${index + 1}`;
+          select.appendChild(option);
+        });
+
+        // Auto-play first clip
+        const defaultClipName = gltf.animations[0].name;
+        playAnimationClip(defaultClipName);
+
+        document.getElementById('anim-section').style.opacity = '1.0';
+      } else {
+        const option = document.createElement('option');
+        option.innerText = 'No animations detected';
+        select.appendChild(option);
+      }
+    }
+
+    function playAnimationClip(clipName) {
+      if (!mixer || !animationActions[clipName]) return;
+
+      const newAction = animationActions[clipName];
+      if (currentAction === newAction) return;
+
+      if (currentAction) {
+        currentAction.fadeOut(0.3);
+      }
+      newAction.reset().fadeIn(0.3).play();
+      currentAction = newAction;
+      isPlayingAnim = true;
+      document.getElementById('play-icon').className = 'fa-solid fa-pause';
+    }
+
+    // --- ANALYTICS ENGINE ---
+    function updateAnalytics(model, animCount) {
+      let triangles = 0;
+      let vertices = 0;
+      let meshCount = 0;
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          meshCount++;
+          const geo = child.geometry;
+          if (geo) {
+            if (geo.index) {
+              triangles += geo.index.count / 3;
+            } else if (geo.attributes.position) {
+              triangles += geo.attributes.position.count / 3;
+            }
+            if (geo.attributes.position) {
+              vertices += geo.attributes.position.count;
+            }
+          }
+        }
+      });
+
+      document.getElementById('stat-triangles').innerText = Math.round(triangles).toLocaleString();
+      document.getElementById('stat-vertices').innerText = Math.round(vertices).toLocaleString();
+      document.getElementById('stat-meshes').innerText = meshCount;
+      document.getElementById('stat-anim-count').innerText = animCount;
+    }
+
+    // --- SHADER INSPECTION MODES ---
+    function setInspectionMode(mode) {
+      if (!currentModelGroup) return;
+
+      const clayMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8, metalness: 0.1 });
+      const metallicMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.95 });
+      const hologramMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.6 });
+
+      currentModelGroup.traverse((child) => {
+        if (child.isMesh) {
+          const origMat = originalMaterials.get(child.uuid);
+
+          if (mode === 'pbr') {
+            child.material = origMat;
+            setWireframe(child.material, false);
+          } else if (mode === 'wireframe') {
+            child.material = origMat;
+            setWireframe(child.material, true);
+          } else if (mode === 'hologram') {
+            child.material = hologramMat;
+          } else if (mode === 'clay') {
+            child.material = clayMat;
+          } else if (mode === 'metallic') {
+            child.material = metallicMat;
+          }
+        }
+      });
+
+      // Update Shader Button Styling
+      document.querySelectorAll('.shader-btn').forEach(btn => {
+        if (btn.getAttribute('data-shader') === mode) {
+          btn.className = 'shader-btn btn-studio p-2 rounded-xl border border-cyan-500/40 bg-cyan-500/20 text-cyan-400 text-center font-medium';
+        } else {
+          btn.className = 'shader-btn btn-studio p-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-300 text-center font-medium';
+        }
+      });
+    }
+
+    function setWireframe(mat, state) {
+      if (Array.isArray(mat)) {
+        mat.forEach(m => m.wireframe = state);
+      } else if (mat) {
+        mat.wireframe = state;
+      }
+    }
+
+    // --- EVENT LISTENERS & UI ---
+    function setupEventListeners() {
+      // Preset Selection
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const presetKey = this.getAttribute('data-model');
+          loadPresetModel(presetKey);
+        });
+      });
+
+      // Animation Selector
+      document.getElementById('select-animation').addEventListener('change', (e) => {
+        playAnimationClip(e.target.value);
+      });
+
+      // Animation Play/Pause
+      document.getElementById('btn-play-pause').addEventListener('click', () => {
+        if (!mixer) return;
+        isPlayingAnim = !isPlayingAnim;
+        document.getElementById('play-icon').className = isPlayingAnim ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+      });
+
+      // Animation Speed
+      document.getElementById('slider-speed').addEventListener('input', (e) => {
+        const speed = parseFloat(e.target.value);
+        if (mixer) mixer.timeScale = speed;
+        document.getElementById('val-speed').innerText = speed.toFixed(1) + 'x';
+      });
+
+      // Shader Mode Switch
+      document.querySelectorAll('.shader-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          setInspectionMode(this.getAttribute('data-shader'));
+        });
+      });
+
+      // Camera Angle Presets
+      document.querySelectorAll('.cam-preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const camMode = this.getAttribute('data-cam');
+          if (camMode === 'full') {
+            camera.position.set(0, 1.5, 4.5);
+            controls.target.set(0, 1.0, 0);
+          } else if (camMode === 'closeup') {
+            camera.position.set(0, 1.8, 1.5);
+            controls.target.set(0, 1.8, 0);
+          } else if (camMode === 'top') {
+            camera.position.set(0, 5.0, 0.1);
+            controls.target.set(0, 1.0, 0);
+          }
+        });
+      });
+
+      // Auto Rotate Toggle
+      document.getElementById('btn-auto-rotate').addEventListener('click', function() {
+        controls.autoRotate = !controls.autoRotate;
+        this.classList.toggle('border-cyan-400');
+        this.classList.toggle('bg-cyan-500/20');
+      });
+
+      // Lighting Sliders
+      document.getElementById('slider-key-light').addEventListener('input', (e) => {
+        keyLight.intensity = parseFloat(e.target.value);
+        document.getElementById('val-light-key').innerText = e.target.value;
+      });
+
+      document.getElementById('slider-rim-light').addEventListener('input', (e) => {
+        rimLight.intensity = parseFloat(e.target.value);
+        document.getElementById('val-light-rim').innerText = e.target.value;
+      });
+
+      // Background Theme
+      document.getElementById('select-bg-color').addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'cyberDark') {
+          scene.background.setHex(0x080c14);
+          scene.fog.color.setHex(0x080c14);
+        } else if (val === 'studioGrey') {
+          scene.background.setHex(0x1e293b);
+          scene.fog.color.setHex(0x1e293b);
+        } else if (val === 'pureBlack') {
+          scene.background.setHex(0x000000);
+          scene.fog.color.setHex(0x000000);
+        }
+      });
+
+      // Grid Checkbox
+      document.getElementById('check-grid').addEventListener('change', (e) => {
+        floorGrid.visible = e.target.checked;
+      });
+
+      // Snapshot Capture
+      document.getElementById('btn-snapshot').addEventListener('click', () => {
+        renderer.render(scene, camera);
+        const dataURL = renderer.domElement.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = '3D_Studio_Snapshot.png';
+        link.href = dataURL;
+        link.click();
+      });
+
+      // Upload Modal Listeners
+      setupUploadModal();
+    }
+
+    function setupUploadModal() {
+      const modal = document.getElementById('upload-modal');
+      const trigger = document.getElementById('btn-upload-trigger');
+      const close = document.getElementById('btn-close-upload');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+
+      trigger.addEventListener('click', () => modal.classList.remove('hidden'));
+      close.addEventListener('click', () => modal.classList.add('hidden'));
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleCustomFile(e.target.files[0]);
+      });
+
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-cyan-400'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-cyan-400'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-cyan-400');
+        if (e.dataTransfer.files.length > 0) handleCustomFile(e.dataTransfer.files[0]);
+      });
+    }
+
+    function handleCustomFile(file) {
+      document.getElementById('upload-modal').classList.add('hidden');
+      document.getElementById('loading-model-name').innerText = file.name.toUpperCase();
+      document.getElementById('active-model-tag').innerText = 'Custom GLB/GLTF';
+
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = function(e) {
+        showLoading(true);
+        const loader = new THREE.GLTFLoader();
+        loader.parse(e.target.result, '', (gltf) => {
+          processLoadedGLTF(gltf);
+          showLoading(false);
+        }, (error) => {
+          console.error('Error parsing custom file:', error);
+          showLoading(false);
+        });
+      };
+    }
+
+    // --- UI LOADING STATE HELPERS ---
+    function showLoading(state) {
+      const loader = document.getElementById('loading-overlay');
+      if (state) {
+        loader.style.display = 'flex';
+        loader.classList.remove('opacity-0');
+        updateLoadingProgress(0);
+      } else {
+        loader.classList.add('opacity-0');
+        setTimeout(() => loader.style.display = 'none', 500);
+      }
+    }
+
+    function updateLoadingProgress(percent) {
+      document.getElementById('loading-bar').style.width = percent + '%';
+      document.getElementById('loading-percentage').innerText = percent + '%';
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- MAIN RENDER LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+
+      // Update Animation Mixer
+      if (mixer && isPlayingAnim) {
+        mixer.update(delta);
+      }
+
+      // Orbit Controls Update
+      controls.update();
+
+      // FPS Calculation
+      frameCount++;
+      const now = performance.now();
+      if (now - lastTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (now - lastTime));
+        document.getElementById('fps-counter').innerText = fps + ' FPS';
+        frameCount = 0;
+        lastTime = now;
+      }
+
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
