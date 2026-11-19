@@ -73,11 +73,6 @@
             background: #585b70;
         }
 
-        /* Utterances Dark Theme Fit */
-        .utterances {
-            max-width: 100% !important;
-        }
-
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
@@ -147,45 +142,25 @@
                     💬 极客命令行留言板
                 </h1>
                 <p class="text-xs text-cat-subtext leading-relaxed font-sans">
-                    留言数据直接与 GitHub Repo 的 Issues 数据库无缝互通。你可以直接通过下方 Utterances 表单发表评论，也可以直接跳转到 GitHub 发起新 Issue！
+                    留言保存在本站仓库的 GitHub Issues 中，所有人都能看到。点击「写留言」会跳转到 GitHub（需登录 GitHub 账号），写几句话提交即可。
                 </p>
                 
                 <!-- Quick Actions Bar -->
                 <div class="pt-2 flex flex-wrap items-center gap-2">
-                    <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues/new" target="_blank" rel="noopener noreferrer" 
+                    <a id="new-issue-btn" href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues/new" target="_blank" rel="noopener noreferrer" 
                        class="bg-cat-mauve hover:bg-opacity-90 text-cat-crust font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-plus"></i> 在 GitHub 新建 Issue
+                        <i class="fa-solid fa-pen"></i> 写留言
                     </a>
                     <button onclick="fetchIssuesFromGitHub()" class="bg-cat-surface hover:bg-cat-overlay text-cat-text px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition">
                         <i id="sync-icon" class="fa-solid fa-rotate"></i> 刷新 Issue 列表
                     </button>
-                    <button onclick="toggleSetupGuide()" class="bg-cat-surface hover:bg-cat-overlay text-cat-teal px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition ml-auto">
-                        <i class="fa-solid fa-circle-info"></i> 配置说明/授权教程
-                    </button>
                 </div>
             </div>
 
-            <!-- Setup Guide Collapsible Panel (Hidden by Default) -->
-            <div id="setup-guide" class="hidden bg-cat-mantle rounded-xl p-4 border border-cat-teal/30 space-y-3 text-xs">
-                <div class="flex items-center justify-between text-cat-teal font-bold border-b border-cat-surface pb-2">
-                    <span><i class="fa-solid fa-sliders"></i> Utterances 挂件启用 3 步指南</span>
-                    <button onclick="toggleSetupGuide()" class="text-cat-subtext hover:text-cat-text"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <ol class="list-decimal list-inside space-y-2 text-cat-subtext font-sans">
-                    <li><strong class="text-cat-text">开启 Issues 功能：</strong> 确保 Repository <code class="bg-cat-surface text-cat-mauve px-1 rounded">ChanglinWu/ChanglinWu.github.io</code> 已经设置为 <strong>Public (公开)</strong> 并在设置中勾选开启了 <strong>Issues</strong>。</li>
-                    <li><strong class="text-cat-text">授权 Utterances App：</strong> 访问 <a href="https://github.com/apps/utterances" target="_blank" class="text-cat-blue underline">github.com/apps/utterances</a>，点击 <strong>Install</strong>，并授予访问 <code class="bg-cat-surface text-cat-mauve px-1 rounded">ChanglinWu.github.io</code> 仓库的权限。</li>
-                    <li><strong class="text-cat-text">完成！</strong> 刷新本页面即可使用下方 Utterances 留言框直接用 GitHub 账号发表评论。</li>
-                </ol>
-            </div>
-
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-cat-surface text-xs font-semibold">
-                <button id="tab-issues-btn" onclick="switchTab('issues')" class="px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition">
-                    <i class="fa-solid fa-list-check"></i> GitHub Issues 列表 (<span id="issues-count">0</span>)
-                </button>
-                <button id="tab-utterances-btn" onclick="switchTab('utterances')" class="px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition">
-                    <i class="fa-solid fa-comments"></i> 发表留言 (Utterances 嵌入框)
-                </button>
+            <!-- Messages heading -->
+            <div class="flex items-center justify-between border-b border-cat-surface pb-2 text-xs font-semibold">
+                <span class="text-cat-mauve flex items-center gap-2"><i class="fa-solid fa-comments"></i> 留言 (<span id="issues-count">0</span>)</span>
+                <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues?q=is%3Aissue" target="_blank" rel="noopener" class="text-cat-subtext hover:text-cat-text font-normal">在 GitHub 查看全部 ↗</a>
             </div>
 
             <!-- Tab 1: Real-time REST API GitHub Issues Feed -->
@@ -199,17 +174,6 @@
                 </div>
             </section>
 
-            <!-- Tab 2: Utterances Comment Box Widget Container -->
-            <section id="tab-utterances" class="hidden space-y-4">
-                <div class="bg-cat-mantle p-3 rounded-xl border border-cat-surface text-xs text-cat-subtext flex items-center justify-between">
-                    <span><i class="fa-regular fa-lightbulb text-cat-yellow"></i> 留言将以讨论形式提交至你的仓库 Issues。</span>
-                    <a href="https://github.com/ChanglinWu/ChanglinWu.github.io/issues" target="_blank" class="text-cat-blue hover:underline">去 GitHub 查看全部</a>
-                </div>
-                <!-- Utterances iframe container -->
-                <div id="utterances-container" class="bg-cat-mantle p-4 rounded-xl border border-cat-surface min-h-[250px]">
-                    <!-- Dynamic Utterances script will load here -->
-                </div>
-            </section>
 
         </div>
 
@@ -241,61 +205,18 @@
         const FULL_REPO = `${REPO_OWNER}/${REPO_NAME}`;
 
         let loadedIssues = [];
-        let utterancesLoaded = false;
+
+        // "Write a message" opens GitHub's new-issue form with a ready-made template
+        const NEW_ISSUE_URL = `https://github.com/${FULL_REPO}/issues/new?` + new URLSearchParams({
+            title: '[Guestbook] ',
+            body: '<!-- 在这里写下你的留言，然后点击 Submit new issue 即可。 -->\n\n'
+        }).toString();
+        document.getElementById('new-issue-btn').href = NEW_ISSUE_URL;
 
         // On Page Load
         window.addEventListener('DOMContentLoaded', () => {
             fetchIssuesFromGitHub();
         });
-
-        // Tab Switching Function
-        function switchTab(tabName) {
-            const issuesTab = document.getElementById('tab-issues');
-            const utterancesTab = document.getElementById('tab-utterances');
-            const issuesBtn = document.getElementById('tab-issues-btn');
-            const utterancesBtn = document.getElementById('tab-utterances-btn');
-
-            if (tabName === 'issues') {
-                issuesTab.classList.remove('hidden');
-                utterancesTab.classList.add('hidden');
-                
-                issuesBtn.className = "px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition";
-                utterancesBtn.className = "px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition";
-            } else {
-                issuesTab.classList.add('hidden');
-                utterancesTab.classList.remove('hidden');
-
-                utterancesBtn.className = "px-4 py-2 text-cat-mauve border-b-2 border-cat-mauve flex items-center gap-2 transition";
-                issuesBtn.className = "px-4 py-2 text-cat-subtext hover:text-cat-text flex items-center gap-2 transition";
-
-                if (!utterancesLoaded) {
-                    loadUtterancesWidget();
-                }
-            }
-        }
-
-        // Toggle Setup Guide
-        function toggleSetupGuide() {
-            const guide = document.getElementById('setup-guide');
-            guide.classList.toggle('hidden');
-        }
-
-        // Load Utterances Dynamic Embed
-        function loadUtterancesWidget() {
-            const container = document.getElementById('utterances-container');
-            container.innerHTML = ''; // clear
-
-            const script = document.createElement('script');
-            script.src = 'https://utteranc.es/client.js';
-            script.setAttribute('repo', FULL_REPO);
-            script.setAttribute('issue-term', 'title');
-            script.setAttribute('theme', 'github-dark');
-            script.setAttribute('crossorigin', 'anonymous');
-            script.async = true;
-
-            container.appendChild(script);
-            utterancesLoaded = true;
-        }
 
         // Fetch Issues using GitHub REST API
         async function fetchIssuesFromGitHub() {
@@ -317,6 +238,11 @@
                     if (response.status === 404) {
                         throw new Error(`仓库不存在或 Issues 功能未开启 (${response.status})`);
                     }
+                    if ((response.status === 403 || response.status === 429) && response.headers.get('x-ratelimit-remaining') === '0') {
+                        const reset = Number(response.headers.get('x-ratelimit-reset')) * 1000;
+                        const when = reset ? new Date(reset).toLocaleTimeString() : '稍后';
+                        throw new Error(`GitHub 接口访问次数已达上限（每小时 60 次），请在 ${when} 后刷新，或直接去 GitHub 查看留言。`);
+                    }
                     throw new Error(`GitHub API 响应错误 (${response.status})`);
                 }
 
@@ -337,9 +263,9 @@
                         <h3 class="text-sm font-bold text-cat-text">无法获取 Issues 数据</h3>
                         <p class="text-xs text-cat-subtext font-sans">${escapeHtml(err.message)}</p>
                         <div class="pt-2">
-                            <button onclick="toggleSetupGuide()" class="bg-cat-surface hover:bg-cat-overlay text-cat-teal text-xs px-3 py-1.5 rounded-lg transition">
-                                <i class="fa-solid fa-wrench"></i> 查看检查与设置指南
-                            </button>
+                            <a href="https://github.com/${FULL_REPO}/issues?q=is%3Aissue" target="_blank" rel="noopener" class="inline-block bg-cat-surface hover:bg-cat-overlay text-cat-teal text-xs px-3 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> 去 GitHub 查看留言
+                            </a>
                         </div>
                     </div>
                 `;
@@ -357,7 +283,7 @@
                     <div class="bg-cat-mantle rounded-xl p-8 text-center text-cat-subtext space-y-3 border border-cat-surface">
                         <i class="fa-regular fa-folder-open text-3xl text-cat-overlay"></i>
                         <p class="text-xs font-sans">当前 Repository 暂无任何 Issue 留言。</p>
-                        <a href="https://github.com/${FULL_REPO}/issues/new" target="_blank" 
+                        <a href="${NEW_ISSUE_URL}" target="_blank" rel="noopener"
                            class="inline-block bg-cat-mauve text-cat-crust font-semibold px-4 py-1.5 rounded-lg text-xs transition hover:opacity-90">
                            成为第一个发表留言的人
                         </a>
@@ -396,7 +322,7 @@
                                 <img src="${issue.user.avatar_url}" alt="${escapeHtml(issue.user.login)}" class="w-7 h-7 rounded-full border border-cat-surface">
                                 <div class="truncate">
                                     <a href="${issue.html_url}" target="_blank" class="text-sm font-bold text-cat-text hover:text-cat-mauve transition truncate inline-block">
-                                        #${issue.number} ${escapeHtml(issue.title)}
+                                        #${issue.number} ${escapeHtml(issue.title.replace(/^\s*\[guestbook\]\s*/i, '') || '(无标题)')}
                                     </a>
                                     <div class="text-[11px] text-cat-subtext flex items-center gap-2">
                                         <span>@${escapeHtml(issue.user.login)}</span>
