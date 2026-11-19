@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WU Changlin's GitHub Hub</title>
+  <meta name="description" content="WU Changlin's terminal-style personal hub: web apps, experiments and interactive utilities built with code.">
+  <meta name="author" content="WU Changlin">
+  <meta name="theme-color" content="#1e1e2e">
+  <!-- Open Graph / Social preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WU Changlin's GitHub Hub">
+  <meta property="og:description" content="Terminal-style personal hub: web apps, experiments and interactive utilities.">
+  <meta property="og:url" content="https://changlinwu.github.io/">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://changlinwu.github.io/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Fira Code & Inter -->
@@ -58,42 +69,58 @@
     .terminal-window {
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(137, 220, 235, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      height: 88vh;   /* fallback */
+      height: 88dvh;  /* respects mobile browser toolbars */
+      max-height: 900px;
     }
+    /* Maximized state (green button) */
+    .terminal-window.is-max {
+      max-width: 100%;
+      height: calc(100vh - 1.5rem);
+      height: calc(100dvh - 1.5rem);
+      max-height: none;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { scrollbar-width: none; }
   </style>
 </head>
-<body class="flex flex-col justify-center items-center min-h-screen p-3 sm:p-6 select-none sm:select-auto">
+<body class="flex flex-col justify-center items-center min-h-screen p-3 sm:p-6">
 
   <!-- Main macOS Window Container -->
-  <div class="terminal-window w-full max-w-4xl bg-[#1e1e2e] rounded-xl overflow-hidden flex flex-col h-[88vh] max-h-[900px] transition-all duration-300">
+  <div id="terminal-window" class="terminal-window w-full max-w-4xl bg-[#1e1e2e] rounded-xl overflow-hidden flex flex-col transition-all duration-300">
     
     <!-- Window Header (macOS Title Bar) -->
     <div class="bg-[#181825] px-4 py-3 flex items-center justify-between border-b border-[#313244] shrink-0">
       <!-- Window Controls (Red, Yellow, Green Buttons) -->
       <div class="flex items-center space-x-2 w-20">
-        <button id="btn-close" class="w-3.5 h-3.5 rounded-full bg-[#ff5f56] hover:bg-[#e0443e] flex items-center justify-center group transition" title="Close Window">
+        <button id="btn-close" class="w-3.5 h-3.5 rounded-full bg-[#ff5f56] hover:bg-[#e0443e] flex items-center justify-center group transition" title="Clear terminal" aria-label="Clear terminal">
           <i class="fa-solid fa-xmark text-[8px] text-[#4c0000] opacity-0 group-hover:opacity-100"></i>
         </button>
-        <button id="btn-minimize" class="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] hover:bg-[#dea123] flex items-center justify-center group transition" title="Minimize">
+        <button id="btn-minimize" class="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] hover:bg-[#dea123] flex items-center justify-center group transition" title="Scroll to top" aria-label="Scroll to top">
           <i class="fa-solid fa-minus text-[8px] text-[#5c4000] opacity-0 group-hover:opacity-100"></i>
         </button>
-        <button id="btn-maximize" class="w-3.5 h-3.5 rounded-full bg-[#27c93f] hover:bg-[#1aab2d] flex items-center justify-center group transition" title="Maximize">
+        <button id="btn-maximize" class="w-3.5 h-3.5 rounded-full bg-[#27c93f] hover:bg-[#1aab2d] flex items-center justify-center group transition" title="Toggle full size" aria-label="Toggle full size">
           <i class="fa-solid fa-expand text-[7px] text-[#003800] opacity-0 group-hover:opacity-100"></i>
         </button>
       </div>
 
       <!-- Navigation Tabs -->
       <div class="flex items-center space-x-1 sm:space-x-2 text-xs overflow-x-auto no-scrollbar">
-        <button onclick="switchTab('home')" id="tab-home" class="tab-btn px-3 py-1 rounded-md bg-[#1e1e2e] text-[#cdd6f4] border border-[#313244] flex items-center space-x-1.5 transition">
+        <button onclick="switchTab('home')" id="tab-home" class="tab-btn shrink-0 px-3 py-1 rounded-md bg-[#1e1e2e] text-[#cdd6f4] border border-[#313244] flex items-center space-x-1.5 transition">
           <i class="fa-solid fa-terminal text-[#89dceb]"></i>
-          <span>index.sh</span>
+          <span class="hidden sm:inline">index.sh</span>
         </button>
-        <button onclick="switchTab('about')" id="tab-about" class="tab-btn px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+        <button onclick="switchTab('about')" id="tab-about" class="tab-btn shrink-0 px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
           <i class="fa-solid fa-user text-[#a6e3a1]"></i>
-          <span>neofetch.sys</span>
+          <span class="hidden sm:inline">neofetch.sys</span>
         </button>
-        <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+        <button onclick="switchTab('projects')" id="tab-projects" class="tab-btn shrink-0 px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
           <i class="fa-solid fa-folder-open text-[#f9e2af]"></i>
-          <span>apps.json</span>
+          <span class="hidden sm:inline">apps.json</span>
+        </button>
+        <button onclick="switchTab('lab')" id="tab-lab" class="tab-btn shrink-0 px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-flask text-[#fab387]"></i>
+          <span class="hidden sm:inline">lab/</span>
         </button>
       </div>
 
@@ -120,7 +147,7 @@
       <div class="bg-[#181825]/70 border border-[#313244] p-4 sm:p-5 rounded-lg space-y-3">
         <div class="flex items-center justify-between">
           <h1 class="text-xl sm:text-2xl font-bold text-[#89dceb] glow-blue flex items-center gap-2">
-            <i class="fa-solid fa-hand-wave text-[#f9e2af]"></i> Hello Visitor! :)
+            <span aria-hidden="true">👋</span> Hello Visitor! :)
           </h1>
           <span class="text-xs px-2.5 py-1 bg-[#313244] text-[#a6e3a1] rounded-full border border-[#45475a] flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-[#a6e3a1] animate-pulse"></span>
@@ -252,7 +279,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           
           <!-- App 1: Kowloon Tong Time -->
-          <a href="https://changlinwu.github.io/hko_cli_terminal_web_app.html" 
+          <a href="hko_cli_terminal_web_app.html" 
              class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#89dceb] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
@@ -273,7 +300,7 @@
           </a>
 
           <!-- App 2: Py3 practice -->
-          <a href="https://changlinwu.github.io/python_idle_online_teaching_platform.html" 
+          <a href="python_idle_online_teaching_platform.html" 
              class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#f9e2af] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
@@ -294,7 +321,7 @@
           </a>
 
           <!-- App 3: Chat Board -->
-          <a href="https://changlinwu.github.io/macos_terminal_guestbook.html" 
+          <a href="macos_terminal_guestbook.html" 
              class="group bg-[#181825] hover:bg-[#313244] border border-[#313244] hover:border-[#cba6f7] p-4 rounded-xl transition duration-200 flex flex-col justify-between space-y-3">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
@@ -305,16 +332,28 @@
               </div>
               <h3 class="font-bold text-[#cdd6f4] group-hover:text-[#cba6f7] transition">Chat Board</h3>
               <p class="text-xs text-[#a6adc8] leading-relaxed">
-                100% Zero-Config Realtime Guestbook & interactive visitor chatroom for messages.
+                Terminal-style guestbook powered by GitHub Issues: leave a message with your GitHub account.
               </p>
             </div>
             <div class="flex items-center gap-1.5 text-[11px] text-[#cba6f7] font-mono">
               <i class="fa-solid fa-message text-[10px]"></i>
-              <span>realtime_guestbook</span>
+              <span>macos_terminal_guestbook</span>
             </div>
           </a>
 
         </div>
+      </div>
+
+      <!-- Experiments / Lab Section (rendered from LAB_ITEMS below) -->
+      <div id="section-lab" class="space-y-3">
+        <div class="flex items-center gap-2 text-xs sm:text-sm">
+          <span class="text-[#a6e3a1] font-semibold">changlin@github</span>
+          <span class="text-[#6c7086]">:</span>
+          <span class="text-[#89b4fa] font-semibold">~</span>
+          <span class="text-[#cba6f7] font-semibold">$</span>
+          <span class="text-[#f5e0dc]">ls ./lab/</span>
+        </div>
+        <div id="lab-list" class="bg-[#181825] border border-[#313244] rounded-lg divide-y divide-[#313244] text-xs sm:text-sm"></div>
       </div>
 
       <!-- Dynamic Command Output Log (For CLI Interactions) -->
@@ -328,6 +367,10 @@
       <button onclick="executeCommand('help')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89dceb] rounded transition shrink-0">help</button>
       <button onclick="executeCommand('projects')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f9e2af] rounded transition shrink-0">projects</button>
       <button onclick="executeCommand('neofetch')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6e3a1] rounded transition shrink-0">neofetch</button>
+      <button onclick="executeCommand('lab')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#fab387] rounded transition shrink-0">lab</button>
+      <button onclick="executeCommand('whoami')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89b4fa] rounded transition shrink-0">whoami</button>
+      <button onclick="executeCommand('python')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f9e2af] rounded transition shrink-0">python</button>
+      <button onclick="executeCommand('quote')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f5e0dc] rounded transition shrink-0">quote</button>
       <button onclick="executeCommand('github')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#cba6f7] rounded transition shrink-0">github</button>
       <button onclick="executeCommand('date')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f38ba8] rounded transition shrink-0">date</button>
       <button onclick="executeCommand('clear')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6adc8] rounded transition shrink-0">clear</button>
@@ -343,7 +386,8 @@
       </div>
       <input type="text" id="terminal-input" 
              class="bg-transparent border-none outline-none text-[#cdd6f4] text-xs sm:text-sm font-mono w-full focus:ring-0 placeholder-[#585b70]"
-             placeholder="Type 'help' or click a command pill above..."
+             placeholder="Type 'help' (↑↓ history, Tab to complete)..."
+             aria-label="Terminal command input"
              autocomplete="off" spellcheck="false">
       <span class="cursor-blink shrink-0"></span>
     </div>
@@ -361,25 +405,80 @@
     const terminalBody = document.getElementById('terminal-body');
     const cliLog = document.getElementById('cli-output-log');
 
-    // Focus input on click anywhere on terminal body
-    terminalBody.addEventListener('click', () => {
-      inputField.focus();
+    // Experiments shown in the lab/ section and by the `lab` command
+    const LAB_ITEMS = [
+      { file: '3d_interactive_room_homepage.html', name: '3D Interactive Room', desc: 'Explorable 3D personal studio space', icon: 'fa-cube' },
+      { file: '3d_model_studio.html', name: '3D Model Studio (EN)', desc: 'GLTF/GLB asset exhibition viewer', icon: 'fa-shapes' },
+      { file: '3d_model_studio_cn.html', name: '3D Model Studio (中文)', desc: 'GLTF/GLB 模型展示（中文版）', icon: 'fa-shapes' },
+      { file: 'saber_3d_showcase.html', name: 'Saber 3D Showcase', desc: 'Character model viewer experiment', icon: 'fa-khanda' },
+      { file: 'cyberboard_realtime_guestbook.html', name: 'CyberBoard', desc: 'Cyberpunk-style realtime message board', icon: 'fa-bolt' },
+      { file: '100_zero_config_realtime_guestbook.html', name: 'Zero-Config Guestbook', desc: 'Cloud-shared minimalist guestbook', icon: 'fa-cloud' },
+    ];
+    document.getElementById('lab-list').innerHTML = LAB_ITEMS.map(item => `
+      <a href="${item.file}" class="group flex items-center gap-3 px-4 py-2.5 hover:bg-[#313244] transition">
+        <i class="fa-solid ${item.icon} text-[#fab387] w-4 text-center"></i>
+        <span class="font-semibold text-[#cdd6f4] group-hover:text-[#fab387] transition shrink-0">${item.name}</span>
+        <span class="text-[#7f849c] text-xs truncate hidden sm:inline">${item.desc}</span>
+        <i class="fa-solid fa-arrow-right ml-auto text-[#6c7086] group-hover:text-[#fab387] group-hover:translate-x-1 transition"></i>
+      </a>`).join('');
+
+    // Focus the input when clicking empty terminal space (desktop only,
+    // never while selecting text or clicking a link/button)
+    const isTouch = window.matchMedia('(hover: none)').matches;
+    terminalBody.addEventListener('click', (e) => {
+      if (isTouch) return;
+      if (e.target.closest('a, button, input, pre, code')) return;
+      if (window.getSelection().toString()) return;
+      inputField.focus({ preventScroll: true });
     });
 
-    // Keyboard listener for command execution
+    // Command history + Tab completion
+    const COMMANDS = ['help', 'projects', 'ls', 'lab', 'neofetch', 'about', 'whoami', 'github', 'python', 'quote', 'date', 'history', 'clear', 'cd'];
+    const history = [];
+    let historyIndex = 0;
+
     inputField.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const command = inputField.value.trim();
         if (command) {
+          history.push(command);
+          historyIndex = history.length;
           executeCommand(command);
           inputField.value = '';
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (!history.length) return;
+        e.preventDefault();
+        historyIndex = Math.max(0, historyIndex - 1);
+        inputField.value = history[historyIndex];
+      } else if (e.key === 'ArrowDown') {
+        if (!history.length) return;
+        e.preventDefault();
+        historyIndex = Math.min(history.length, historyIndex + 1);
+        inputField.value = history[historyIndex] || '';
+      } else if (e.key === 'Tab') {
+        const partial = inputField.value.trim().toLowerCase();
+        if (!partial) return;
+        e.preventDefault();
+        const matches = COMMANDS.filter(c => c.startsWith(partial));
+        if (matches.length === 1) {
+          inputField.value = matches[0];
+        } else if (matches.length > 1) {
+          showToast(matches.join('  '));
         }
       }
     });
 
     // Command Interpreter
     function executeCommand(cmd) {
-      const lowerCmd = cmd.toLowerCase().trim();
+      let lowerCmd = cmd.toLowerCase().trim().replace(/\s+/g, ' ');
+      // `cd projects` / `cd lab` / `cd ~` behave like tab switches
+      const cdMap = { 'cd projects': 'projects', 'cd apps': 'projects', 'cd lab': 'lab', 'cd ~': 'home', 'cd': 'home', 'cd about': 'about' };
+      let cdTarget = null;
+      if (lowerCmd === 'cd' || lowerCmd.startsWith('cd ')) {
+        cdTarget = cdMap[lowerCmd] || null;
+        lowerCmd = 'cd';
+      }
 
       // Create command prompt line log
       const logItem = document.createElement('div');
@@ -406,13 +505,18 @@
               <p class="text-[#89dceb] font-semibold">Available Commands:</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 <div><span class="text-[#a6e3a1] font-mono">projects</span> / <span class="text-[#a6e3a1] font-mono">ls</span> : List mini-apps</div>
+                <div><span class="text-[#a6e3a1] font-mono">lab</span> : List experiments</div>
                 <div><span class="text-[#a6e3a1] font-mono">neofetch</span> / <span class="text-[#a6e3a1] font-mono">about</span> : Display system info</div>
+                <div><span class="text-[#a6e3a1] font-mono">whoami</span> : Who runs this place</div>
+                <div><span class="text-[#a6e3a1] font-mono">cd</span> &lt;projects|lab|about|~&gt; : Jump to section</div>
                 <div><span class="text-[#a6e3a1] font-mono">github</span> : Open GitHub Profile</div>
                 <div><span class="text-[#a6e3a1] font-mono">python</span> : Run Python script sample</div>
                 <div><span class="text-[#a6e3a1] font-mono">quote</span> : Display favorite motto</div>
                 <div><span class="text-[#a6e3a1] font-mono">date</span> : Show current system time</div>
+                <div><span class="text-[#a6e3a1] font-mono">history</span> : Show typed commands</div>
                 <div><span class="text-[#a6e3a1] font-mono">clear</span> : Clear terminal history</div>
               </div>
+              <p class="text-[11px] text-[#7f849c] pt-1">Tip: ↑/↓ recall previous commands, Tab autocompletes.</p>
             </div>
           `;
           break;
@@ -423,12 +527,43 @@
             <div class="py-1 space-y-2 text-xs">
               <p class="text-[#f9e2af] font-semibold">Hosted Applications:</p>
               <ul class="space-y-1.5 font-mono">
-                <li>1. <a href="https://changlinwu.github.io/hko_cli_terminal_web_app.html" target="_blank" class="text-[#89dceb] hover:underline">Kowloon Tong Time</a> - HK Observatory CLI App</li>
-                <li>2. <a href="https://changlinwu.github.io/python_idle_online_teaching_platform.html" target="_blank" class="text-[#f9e2af] hover:underline">Py3 Practice</a> - Online Python IDLE Platform</li>
-                <li>3. <a href="https://changlinwu.github.io/macos_terminal_guestbook.html" target="_blank" class="text-[#cba6f7] hover:underline">Chat Board</a> - 100% Realtime Guestbook</li>
+                <li>1. <a href="hko_cli_terminal_web_app.html" class="text-[#89dceb] hover:underline">Kowloon Tong Time</a> - HK Observatory CLI App</li>
+                <li>2. <a href="python_idle_online_teaching_platform.html" class="text-[#f9e2af] hover:underline">Py3 Practice</a> - Online Python IDLE Platform</li>
+                <li>3. <a href="macos_terminal_guestbook.html" class="text-[#cba6f7] hover:underline">Chat Board</a> - GitHub Issues Guestbook</li>
+              </ul>
+              <p class="text-[#7f849c]">More experiments: type <span class="text-[#fab387]">lab</span></p>
+            </div>
+          `;
+          break;
+
+        case 'lab':
+          response.innerHTML = `
+            <div class="py-1 space-y-2 text-xs">
+              <p class="text-[#fab387] font-semibold">Experiments (./lab/):</p>
+              <ul class="space-y-1.5 font-mono">
+                ${LAB_ITEMS.map((item, i) => `<li>${i + 1}. <a href="${item.file}" class="text-[#fab387] hover:underline">${item.name}</a> - ${item.desc}</li>`).join('')}
               </ul>
             </div>
           `;
+          break;
+
+        case 'whoami':
+          response.innerHTML = `<span class="text-[#89b4fa]">changlin</span> <span class="text-[#7f849c]">— WU Changlin, builder of small web things. Try <span class="text-[#a6e3a1]">neofetch</span> for details.</span>`;
+          break;
+
+        case 'cd':
+          if (cdTarget) {
+            switchTab(cdTarget);
+            response.innerHTML = `<span class="text-[#a6e3a1]">Moved to ${cdTarget === 'home' ? '~' : '~/' + cdTarget}</span>`;
+          } else {
+            response.innerHTML = `<span class="text-[#f38ba8]">cd: no such directory: ${escapeHTML(cmd.slice(2).trim())}. Try projects, lab, about or ~</span>`;
+          }
+          break;
+
+        case 'history':
+          response.innerHTML = history.length
+            ? `<ol class="font-mono text-xs space-y-0.5">${history.map((h, i) => `<li><span class="text-[#6c7086]">${String(i + 1).padStart(3, ' ')}</span>  ${escapeHTML(h)}</li>`).join('')}</ol>`
+            : `<span class="text-[#7f849c]">No commands typed yet.</span>`;
           break;
 
         case 'neofetch':
@@ -493,6 +628,8 @@
         document.getElementById('section-neofetch').scrollIntoView({ behavior: 'smooth' });
       } else if (tab === 'projects') {
         document.getElementById('section-projects').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'lab') {
+        document.getElementById('section-lab').scrollIntoView({ behavior: 'smooth' });
       }
     }
 
@@ -508,6 +645,12 @@
 
     // Copy to Clipboard Utility
     function copyToClipboard(text, message) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+          .then(() => showToast(message || "Copied to clipboard!"))
+          .catch(() => showToast("Failed to copy"));
+        return;
+      }
       const textarea = document.createElement('textarea');
       textarea.value = text;
       document.body.appendChild(textarea);
@@ -528,8 +671,9 @@
       toastMsg.innerText = message;
       toast.classList.remove('opacity-0', 'pointer-events-none');
       toast.classList.add('opacity-100');
-      
-      setTimeout(() => {
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
         toast.classList.remove('opacity-100');
         toast.classList.add('opacity-0', 'pointer-events-none');
       }, 2500);
@@ -548,15 +692,18 @@
       );
     }
 
-    // Window control buttons feedback
+    // Window control buttons
+    let toastTimer = null;
     document.getElementById('btn-close').addEventListener('click', () => {
-      showToast("macOS Terminal session active");
+      executeCommand('clear');
     });
     document.getElementById('btn-minimize').addEventListener('click', () => {
-      showToast("Minimized terminal buffer");
+      switchTab('home');
     });
     document.getElementById('btn-maximize').addEventListener('click', () => {
-      showToast("Terminal window maximized");
+      const win = document.getElementById('terminal-window');
+      const max = win.classList.toggle('is-max');
+      showToast(max ? "Terminal window maximized" : "Terminal window restored");
     });
   </script>
 </body>
