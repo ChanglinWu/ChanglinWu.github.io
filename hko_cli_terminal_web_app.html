@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HKO Terminal CLI — Hong Kong Observatory Interactive Portal</title>
+    <meta name="description" content="Terminal-style web app for real-time Hong Kong Observatory weather, warnings and forecasts.">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts for Terminal Styling -->
@@ -364,13 +367,13 @@
         // --- ASCII Art Banner ---
         function renderBanner() {
             appendOutput(`
-<pre class="font-mono text-[10px] sm:text-xs md:text-sm leading-tight text-emerald-400 font-bold overflow-x-auto">
-  ██╗██╗██╗  ██╗ ██████╗      ██████╗██╗     ██╗
-  ██║██║██║  ██║██╔═══██╗    ██╔════╝██║     ██║
-  ███████║███████║██║   ██║    ██║     ██║     ██║
-  ██╔══██║██╔══██║██║   ██║    ██║     ██║     ██║
-  ██║  ██║██║  ██║╚██████╔╝    ╚██████╗███████╗██║
-  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝      ╚═════╝╚══════╝╚═╝ v2.0
+<pre class="text-[6px] sm:text-xs md:text-sm text-emerald-400 font-bold overflow-x-auto" style="font-family: Menlo, Consolas, 'DejaVu Sans Mono', 'Courier New', monospace; line-height: 1.15;">
+██╗  ██╗██╗  ██╗ ██████╗      ██████╗██╗     ██╗
+██║  ██║██║ ██╔╝██╔═══██╗    ██╔════╝██║     ██║
+███████║█████╔╝ ██║   ██║    ██║     ██║     ██║
+██╔══██║██╔═██╗ ██║   ██║    ██║     ██║     ██║
+██║  ██║██║  ██╗╚██████╔╝    ╚██████╗███████╗██║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝      ╚═════╝╚══════╝╚═╝ v2.0
 </pre>
 <div class="text-xs space-y-1">
     <p><span class="text-accent">★ Hong Kong Observatory Interactive Terminal (HKO CLI)</span></p>
@@ -770,5 +773,19 @@
             }, 300);
         }
     </script>
+
+<!-- Back to homepage button (shared across sub-pages) -->
+<a href="./" class="cw-home-btn" title="Back to homepage" aria-label="Back to homepage">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  <span>Home</span>
+</a>
+<style>
+  .cw-home-btn{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 10px 6px 7px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#cdd6f4;background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;transition:opacity .2s,transform .2s}
+  .cw-home-btn:hover,.cw-home-btn:focus-visible{opacity:1;transform:translateX(-2px)}
+  @media print{.cw-home-btn{display:none}}
+</style>
 </body>
 </html>

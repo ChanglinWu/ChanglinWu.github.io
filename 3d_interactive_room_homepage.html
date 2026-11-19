@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的 3D 互动空间 | Personal Studio</title>
+    <meta name="description" content="An explorable 3D studio room built with Three.js, an experiment from WU Changlin's lab.">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js CDN -->
@@ -57,7 +60,7 @@
         <div class="flex items-center gap-3 bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 pointer-events-auto shadow-lg">
             <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
             <span class="font-bold text-sm sm:text-base tracking-wide bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-transparent">
-                Alex's Digital Studio
+                Changlin's 3D Studio
             </span>
         </div>
 
@@ -123,7 +126,7 @@
 
         <!-- Drawer Footer -->
         <div class="pt-4 border-t border-white/10 text-xs text-slate-500 flex justify-between items-center">
-            <span>© 2026 Alex's Studio</span>
+            <span>© 2026 WU Changlin</span>
             <span class="text-amber-400/80">Press ESC or click outside to close</span>
         </div>
     </aside>
@@ -139,135 +142,84 @@
                     <div class="space-y-4">
                         <div class="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
                             <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-slate-950 shadow-md">
-                                A
+                                W
                             </div>
                             <div>
-                                <h3 class="text-base font-bold text-white">Alex Zhang</h3>
-                                <p class="text-xs text-amber-300/80 mt-0.5">全栈开发者 & 3D 视觉爱好者</p>
-                                <p class="text-xs text-slate-400 mt-1">📍 现居 香港 / 深圳</p>
+                                <h3 class="text-base font-bold text-white">WU Changlin</h3>
+                                <p class="text-xs text-amber-300/80 mt-0.5">Builder of small web things</p>
                             </div>
                         </div>
 
                         <div>
-                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">个人简介</h4>
+                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">关于这个房间</h4>
                             <p class="text-slate-300">
-                                嗨！我是 Alex。我喜欢用代码构建充满灵感与优雅交互的数字体验。专注 Web 3D 交互、全栈应用开发与 AI 工具流整合。
+                                这是我用 Three.js 搭的一个 3D 小实验。更完整的介绍、学术工作和项目请回到主页查看。
                             </p>
                         </div>
 
-                        <div>
-                            <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">技术栈关键词</h4>
-                            <div class="flex flex-wrap gap-2">
-                                <span class="px-2.5 py-1 bg-amber-400/10 text-amber-300 border border-amber-400/20 rounded-lg text-xs">Three.js / WebGL</span>
-                                <span class="px-2.5 py-1 bg-blue-400/10 text-blue-300 border border-blue-400/20 rounded-lg text-xs">React / Next.js</span>
-                                <span class="px-2.5 py-1 bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 rounded-lg text-xs">TypeScript</span>
-                                <span class="px-2.5 py-1 bg-purple-400/10 text-purple-300 border border-purple-400/20 rounded-lg text-xs">Tailwind CSS</span>
-                                <span class="px-2.5 py-1 bg-rose-400/10 text-rose-300 border border-rose-400/20 rounded-lg text-xs">Node.js / Python</span>
-                            </div>
-                        </div>
-
                         <div class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
-                            <h4 class="text-xs font-bold text-amber-300 mb-1">💡 探索信念</h4>
-                            <p class="text-xs text-amber-100/80">"Great software is like art — it must be performant, functional, and delightful."</p>
+                            <h4 class="text-xs font-bold text-amber-300 mb-1">💡 Motto</h4>
+                            <p class="text-xs text-amber-100/80">"Wish the best for the world!"</p>
                         </div>
                     </div>
                 `
             },
             projects: {
-                title: "代表作品 / Featured Projects",
+                title: "项目 / Projects",
                 icon: "🖥️",
                 content: `
                     <div class="space-y-4">
-                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                        <a href="hko_cli_terminal_web_app.html" class="block group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
                             <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">✨ 3D 拟真物理探索空间</h3>
-                                <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Interactive 3D</span>
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">⛅ Kowloon Tong Time</h3>
+                                <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Web App</span>
                             </div>
-                            <p class="text-xs text-slate-400 mb-3">基于 Three.js + Cannon.js 构建的浏览器三维数字游戏房间，支持重力感应与柔性碰撞。</p>
-                            <div class="flex gap-2 text-[10px] text-slate-400">
-                                <span class="bg-white/5 px-2 py-0.5 rounded">Three.js</span>
-                                <span class="bg-white/5 px-2 py-0.5 rounded">WebGL</span>
-                            </div>
-                        </div>
-
-                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                            <p class="text-xs text-slate-400">终端风格的香港天文台实时天气、警告与预报。</p>
+                        </a>
+                        <a href="python_idle_online_teaching_platform.html" class="block group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
                             <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">🤖 AI 知识库与工作流引擎</h3>
-                                <span class="text-[10px] bg-blue-400/20 text-blue-300 px-2 py-0.5 rounded-full">Full Stack</span>
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">🐍 Py3 Practice</h3>
+                                <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Teaching</span>
                             </div>
-                            <p class="text-xs text-slate-400 mb-3">支持多模态 Agent 调度的个人知识库管理工具，高效自动化整合日常工作流程。</p>
-                            <div class="flex gap-2 text-[10px] text-slate-400">
-                                <span class="bg-white/5 px-2 py-0.5 rounded">Next.js</span>
-                                <span class="bg-white/5 px-2 py-0.5 rounded">OpenAI API</span>
-                            </div>
-                        </div>
-
-                        <div class="group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
+                            <p class="text-xs text-slate-400">浏览器内运行的 Python IDLE，附 NumPy / Matplotlib 课程。</p>
+                        </a>
+                        <a href="./#section-works" class="block group bg-white/5 hover:bg-white/10 p-4 rounded-2xl border border-white/5 transition-all">
                             <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">🎨 Minimal Dashboard UI Kit</h3>
-                                <span class="text-[10px] bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-full">Design System</span>
+                                <h3 class="font-bold text-white group-hover:text-amber-300 transition-colors">📄 Works</h3>
+                                <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Academic & Dev</span>
                             </div>
-                            <p class="text-xs text-slate-400 mb-3">极简现代暗黑风格仪表盘组件库，超过 3000+ GitHub Stars。</p>
-                            <div class="flex gap-2 text-[10px] text-slate-400">
-                                <span class="bg-white/5 px-2 py-0.5 rounded">TailwindCSS</span>
-                                <span class="bg-white/5 px-2 py-0.5 rounded">Figma</span>
-                            </div>
-                        </div>
+                            <p class="text-xs text-slate-400">学术工作与开发项目清单（主页 works.md 板块）。</p>
+                        </a>
                     </div>
                 `
             },
             contact: {
-                title: "联系方式 / Contact Info",
+                title: "联系方式 / Contact",
                 icon: "💻",
                 content: `
                     <div class="space-y-4">
-                        <p class="text-slate-300 text-xs">有项目合作意向或想交流技术？欢迎随时与我取得联系！</p>
-                        
+                        <p class="text-slate-300 text-xs">想交流或留言？欢迎通过下面的方式找到我。</p>
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between p-3.5 bg-white/5 rounded-xl border border-white/5">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-lg">📧</span>
-                                    <div>
-                                        <p class="text-[10px] text-slate-400">电子邮箱</p>
-                                        <p class="text-xs font-mono text-amber-200">alex.design.dev@gmail.com</p>
-                                    </div>
-                                </div>
-                                <button onclick="navigator.clipboard.writeText('alex.design.dev@gmail.com'); alert('邮箱已复制到剪贴板！');" class="px-3 py-1 bg-white/10 hover:bg-white/20 text-xs rounded-lg transition-all text-slate-200">
-                                    复制
-                                </button>
-                            </div>
-
-                            <a href="https://github.com" target="_blank" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                            <a href="https://github.com/ChanglinWu" target="_blank" rel="noopener" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                                 <div class="flex items-center gap-3">
                                     <span class="text-lg">🐙</span>
                                     <div>
                                         <p class="text-[10px] text-slate-400">GitHub 主页</p>
-                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">github.com/alex-developer</p>
+                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">github.com/ChanglinWu</p>
                                     </div>
                                 </div>
                                 <span class="text-slate-500 group-hover:text-white">↗</span>
                             </a>
-
-                            <a href="https://twitter.com" target="_blank" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                            <a href="macos_terminal_guestbook.html" target="_blank" rel="noopener" class="flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-lg">🐦</span>
+                                    <span class="text-lg">💬</span>
                                     <div>
-                                        <p class="text-[10px] text-slate-400">Twitter / X</p>
-                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">@alex_dev_studio</p>
+                                        <p class="text-[10px] text-slate-400">留言板</p>
+                                        <p class="text-xs font-mono text-white group-hover:text-amber-300">Chat Board (GitHub Issues)</p>
                                     </div>
                                 </div>
                                 <span class="text-slate-500 group-hover:text-white">↗</span>
                             </a>
-                        </div>
-
-                        <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-4 rounded-2xl border border-amber-500/20">
-                            <h4 class="text-xs font-bold text-amber-300 mb-1">💬 快速留言</h4>
-                            <p class="text-[11px] text-slate-400 mb-3">发送消息给我，我会在 24 小时内回复。</p>
-                            <input type="text" placeholder="你的联系邮箱..." class="w-full px-3 py-2 bg-slate-950/60 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400/50 mb-2">
-                            <textarea rows="2" placeholder="想要聊聊的内容..." class="w-full px-3 py-2 bg-slate-950/60 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400/50 mb-2"></textarea>
-                            <button onclick="alert('消息已发送（模拟）！感谢留言！');" class="w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg">
-                                发送消息
-                            </button>
                         </div>
                     </div>
                 `
@@ -757,5 +709,19 @@
         // Start App on Window Load
         window.onload = init;
     </script>
+
+<!-- Back to homepage button (shared across sub-pages) -->
+<a href="./" class="cw-home-btn" title="Back to homepage" aria-label="Back to homepage">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  <span>Home</span>
+</a>
+<style>
+  .cw-home-btn{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 10px 6px 7px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#cdd6f4;background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;transition:opacity .2s,transform .2s}
+  .cw-home-btn:hover,.cw-home-btn:focus-visible{opacity:1;transform:translateX(-2px)}
+  @media print{.cw-home-btn{display:none}}
+</style>
 </body>
 </html>

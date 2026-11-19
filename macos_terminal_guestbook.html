@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guestbook Terminal - ChanglinWu</title>
+    <meta name="description" content="Terminal-style guestbook for WU Changlin's site, powered by GitHub Issues.">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -138,7 +141,7 @@
             <div class="space-y-2 bg-cat-mantle p-4 rounded-xl border border-cat-surface">
                 <div class="flex items-center text-xs text-cat-subtext">
                     <span class="text-cat-green font-bold mr-2">guestbook@localhost:~$</span>
-                    <span>./fetch_comments.sh --repo=ChanglinWu/ChanglinWu.github.io</span>
+                    <span class="break-all">./fetch_comments.sh --repo=ChanglinWu/ChanglinWu.github.io</span>
                 </div>
                 <h1 class="text-lg sm:text-xl font-bold text-cat-mauve flex items-center gap-2 pt-1">
                     💬 极客命令行留言板
@@ -458,15 +461,19 @@
             });
         }
     </script>
+
+<!-- Back to homepage button (shared across sub-pages) -->
+<a href="./" class="cw-home-btn" title="Back to homepage" aria-label="Back to homepage">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  <span>Home</span>
+</a>
+<style>
+  .cw-home-btn{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 10px 6px 7px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#cdd6f4;background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;transition:opacity .2s,transform .2s}
+  .cw-home-btn:hover,.cw-home-btn:focus-visible{opacity:1;transform:translateX(-2px)}
+  @media print{.cw-home-btn{display:none}}
+</style>
 </body>
 </html>
-```
-
----
-
-### 🌟 这个重构版的主要改进：
-
-1. **GitHub API 实时预览卡片**：直接抓取 `ChanglinWu/ChanglinWu.github.io` 的 Issues 列表，实时展示评论者头像、Issue 标题、正文摘要、评论条数、Label 标签以及 Open/Closed 状态。
-2. **集成 Utterances 原生评论组件**：内置无缝调用的 Utterances 框架，适配暗色 `github-dark` 风格，用户可以在网页上用 GitHub 账号直接留言。
-3. **macOS Catppuccin Terminal 极客视觉**：高颜值的红黄绿窗口控制按钮、终端 Prompt 命令行输入展示，带有可收起/展开的 **3 步配置指南**。
-4. **直达 GitHub 新建按钮**：点击 **“在 GitHub 新建 Issue”** 会自动带用户跳转到你的 `ChanglinWu/ChanglinWu.github.io/issues/new` 提交新话题。

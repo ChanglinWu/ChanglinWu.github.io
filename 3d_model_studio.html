@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Asset Exhibition Studio - Real GLTF/GLB Showcase</title>
+    <meta name="description" content="Three.js GLTF/GLB model viewer with animations, shader modes and lighting controls.">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -859,5 +862,50 @@
       renderer.render(scene, camera);
     }
   </script>
+
+<!-- Back to homepage button (shared across sub-pages) -->
+<a href="./" class="cw-home-btn" title="Back to homepage" aria-label="Back to homepage">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  <span>Home</span>
+</a>
+<style>
+  .cw-home-btn{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 10px 6px 7px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#cdd6f4;background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;transition:opacity .2s,transform .2s}
+  .cw-home-btn:hover,.cw-home-btn:focus-visible{opacity:1;transform:translateX(-2px)}
+  @media print{.cw-home-btn{display:none}}
+</style>
+
+<!-- Mobile: hide control panels by default so the 3D view is visible -->
+<button type="button" class="cw-panels-btn" aria-expanded="false" aria-label="Show controls">
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+  <span>Controls</span>
+</button>
+<style>
+  .cw-panels-btn{display:none}
+  @media (max-width: 767px){
+    .cw-panels-btn{position:fixed;right:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:5px;
+      padding:6px 11px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:#cdd6f4;
+      background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+      box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer}
+    body:not(.cw-panels-open) #left-panel, #right-panel{display:none !important}
+    body.cw-panels-open #left-panel, #right-panel{left:12px !important;right:12px !important;width:auto !important;max-height:calc(100vh - 9rem) !important}
+  }
+</style>
+<script>
+  (function(){
+    var btn=document.querySelector('.cw-panels-btn'), label=btn.querySelector('span');
+    var panels=[].slice.call(document.querySelectorAll('#left-panel, #right-panel')), state=0; // 0 = hidden, i = showing panel i
+    btn.addEventListener('click',function(){
+      state=(state+1)%(panels.length+1);
+      document.body.classList.toggle('cw-panels-open',state>0);
+      panels.forEach(function(p,i){ p.style.display=(state===0||i===state-1)?'':'none'; });
+      btn.setAttribute('aria-expanded',state>0);
+      label.textContent = state===0 ? 'Controls'
+        : (state<panels.length ? 'Next ('+state+'/'+panels.length+')' : (panels.length>1?'Hide ('+state+'/'+panels.length+')':'Hide'));
+    });
+  })();
+</script>
 </body>
 </html>

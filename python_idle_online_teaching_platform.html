@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python IDLE - WebAssembly 交互式 Python 教学平台</title>
+    <meta name="description" content="In-browser Python (Pyodide) IDLE with NumPy & Matplotlib lessons, no install needed.">
+    <meta name="theme-color" content="#1e1e2e">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -132,7 +135,7 @@
         <div class="idle-titlebar">
             <div class="flex items-center gap-2">
                 <i class="fa-brands fa-python text-yellow-400 text-lg"></i>
-                <span>Python 3.11.0 IDLE - WebAssembly 交互式学习平台 (NumPy & Matplotlib)</span>
+                <span>Python 3.12 IDLE - WebAssembly 交互式学习平台 (NumPy & Matplotlib)</span>
             </div>
             <div class="flex items-center gap-2 text-xs">
                 <span id="pyodide-status" class="bg-yellow-500 text-black px-2 py-0.5 rounded font-mono font-semibold animate-pulse">
@@ -270,7 +273,7 @@
                 <div class="idle-titlebar">
                     <div class="flex items-center gap-1.5">
                         <i class="fa-solid fa-terminal text-green-400"></i>
-                        <span>Python 3.11 Shell (交互式终端)</span>
+                        <span>Python 3.12 Shell (交互式终端)</span>
                     </div>
                     <button onclick="clearShellConsole()" title="清空 Console" class="hover:bg-white/20 px-1.5 py-0.5 rounded text-xs">
                         <i class="fa-solid fa-trash-can"></i>
@@ -279,7 +282,7 @@
 
                 <div id="shell-container" class="flex-1 p-2 overflow-y-auto bg-white dark:bg-gray-950 font-mono text-xs shell-output border-b border-gray-300 dark:border-gray-800">
                     <div class="text-blue-800 dark:text-blue-400 font-bold mb-1">
-                        Python 3.11.0 (main, WebAssembly Pyodide v0.26.2)<br>
+                        Python 3.12 (WebAssembly Pyodide v0.26.2)<br>
                         Type "help", "copyright", "credits" or "license" for more information.
                     </div>
                     <div id="shell-logs"></div>
@@ -359,7 +362,7 @@
                     "使用切片获取前 5 个元素 <code>sub_arr</code> 并打印",
                     "使用 <code>np.linspace(0, 1, 10)</code> 创建等间隔数组 <code>arr_linspace</code>"
                 ],
-                tips: "NumPy 切片 <code>arr[:5]</code> 包含索引 0 到 4 的数据，左闭右开。`np.linspace` 可生成指定范围内的平滑分布点。",
+                tips: "NumPy 切片 <code>arr[:5]</code> 包含索引 0 到 4 的数据，左闭右开。<code>np.linspace</code> 可生成指定范围内的平滑分布点。",
                 initialCode: `# Lesson 1: NumPy 基础 - 数组创建与切片
 import numpy as np
 
@@ -373,7 +376,7 @@ print("前 5 个元素 sub_arr:", sub_arr)
 
 # 3. 使用 linspace 生成 0 到 1 之间的 10 个等间隔数据
 arr_linspace = np.linspace(0, 1, 10)
-print("0到1等间距10个数:\n", arr_linspace)
+print("0到1等间距10个数:\\n", arr_linspace)
 `,
                 verifyFunc: async () => {
                     const checkPy = `
@@ -411,18 +414,18 @@ import numpy as np
 # 1. 创建 1~12 数组并重构为 3x4 矩阵
 arr = np.arange(1, 13)
 matrix = arr.reshape(3, 4)
-print("3x4 矩阵:\n", matrix)
+print("3x4 矩阵:\\n", matrix)
 
 # 2. 统计计算
 m_mean = np.mean(matrix)
 m_sum_col = np.sum(matrix, axis=0)
 
-print("\n矩阵全局均值 m_mean:", m_mean)
+print("\\n矩阵全局均值 m_mean:", m_mean)
 print("按列求和 m_sum_col:", m_sum_col)
 
 # 3. 广播运算
 matrix_double = matrix * 2
-print("\n矩阵乘以 2 结果:\n", matrix_double)
+print("\\n矩阵乘以 2 结果:\\n", matrix_double)
 `,
                 verifyFunc: async () => {
                     const checkPy = `
@@ -647,7 +650,7 @@ print("NumPy & Matplotlib 环境就绪！")
 
             document.getElementById('lesson-title').innerText = lesson.title;
             document.getElementById('lesson-desc').innerHTML = lesson.desc;
-            document.getElementById('lesson-tips').innerText = lesson.tips;
+            document.getElementById('lesson-tips').innerHTML = lesson.tips;
             document.getElementById('lesson-progress-badge').innerText = `课程 ${currentLessonIndex + 1}/5`;
 
             // Render Objectives
@@ -914,5 +917,19 @@ _captured_figs
             initPyodideEngine();
         };
     </script>
+
+<!-- Back to homepage button (shared across sub-pages) -->
+<a href="./" class="cw-home-btn" title="Back to homepage" aria-label="Back to homepage">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  <span>Home</span>
+</a>
+<style>
+  .cw-home-btn{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:inline-flex;align-items:center;gap:4px;
+    padding:6px 10px 6px 7px;border-radius:999px;font:600 12px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:#cdd6f4;background:rgba(17,17,27,.78);border:1px solid rgba(255,255,255,.14);text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:.85;transition:opacity .2s,transform .2s}
+  .cw-home-btn:hover,.cw-home-btn:focus-visible{opacity:1;transform:translateX(-2px)}
+  @media print{.cw-home-btn{display:none}}
+</style>
 </body>
 </html>
