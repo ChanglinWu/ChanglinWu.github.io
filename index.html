@@ -118,6 +118,10 @@
           <i class="fa-solid fa-folder-open text-[#f9e2af]"></i>
           <span class="hidden sm:inline">apps.json</span>
         </button>
+        <button onclick="switchTab('works')" id="tab-works" class="tab-btn shrink-0 px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
+          <i class="fa-solid fa-book text-[#89b4fa]"></i>
+          <span class="hidden sm:inline">works.md</span>
+        </button>
         <button onclick="switchTab('lab')" id="tab-lab" class="tab-btn shrink-0 px-3 py-1 rounded-md text-[#a6adc8] hover:bg-[#313244] flex items-center space-x-1.5 transition">
           <i class="fa-solid fa-flask text-[#fab387]"></i>
           <span class="hidden sm:inline">lab/</span>
@@ -344,6 +348,25 @@
         </div>
       </div>
 
+      <!-- Works Section: academic work + dev projects (data lives in works.js) -->
+      <div id="section-works" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+          <div class="flex items-center gap-2">
+            <span class="text-[#a6e3a1] font-semibold">changlin@github</span>
+            <span class="text-[#6c7086]">:</span>
+            <span class="text-[#89b4fa] font-semibold">~</span>
+            <span class="text-[#cba6f7] font-semibold">$</span>
+            <span class="text-[#f5e0dc]">cat works.md</span>
+          </div>
+          <div id="works-filter" class="flex items-center gap-3 text-xs text-[#7f849c]">
+            <button data-filter="all" class="hover:text-[#cdd6f4] transition">all</button>
+            <button data-filter="academic" class="hover:text-[#cdd6f4] transition">academic</button>
+            <button data-filter="dev" class="hover:text-[#cdd6f4] transition">dev</button>
+          </div>
+        </div>
+        <div id="works-list" class="space-y-6"></div>
+      </div>
+
       <!-- Experiments / Lab Section (rendered from LAB_ITEMS below) -->
       <div id="section-lab" class="space-y-3">
         <div class="flex items-center gap-2 text-xs sm:text-sm">
@@ -367,6 +390,7 @@
       <button onclick="executeCommand('help')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89dceb] rounded transition shrink-0">help</button>
       <button onclick="executeCommand('projects')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f9e2af] rounded transition shrink-0">projects</button>
       <button onclick="executeCommand('neofetch')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#a6e3a1] rounded transition shrink-0">neofetch</button>
+      <button onclick="executeCommand('works')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89b4fa] rounded transition shrink-0">works</button>
       <button onclick="executeCommand('lab')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#fab387] rounded transition shrink-0">lab</button>
       <button onclick="executeCommand('whoami')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#89b4fa] rounded transition shrink-0">whoami</button>
       <button onclick="executeCommand('python')" class="px-2.5 py-1 bg-[#313244] hover:bg-[#45475a] text-[#f9e2af] rounded transition shrink-0">python</button>
@@ -400,6 +424,8 @@
     <span id="toast-message">Notification</span>
   </div>
 
+  <!-- Academic work & dev projects data: edit works.js to update the Works section -->
+  <script src="works.js"></script>
   <script>
     const inputField = document.getElementById('terminal-input');
     const terminalBody = document.getElementById('terminal-body');
@@ -422,6 +448,73 @@
         <i class="fa-solid fa-arrow-right ml-auto text-[#6c7086] group-hover:text-[#fab387] group-hover:translate-x-1 transition"></i>
       </a>`).join('');
 
+    // ---------- Works section (academic + dev), data from works.js ----------
+    const WORKS = window.WORKS || { academic: [], dev: [] };
+    const WORK_GROUPS = [
+      { key: 'academic', label: 'Academic', color: '#89b4fa' },
+      { key: 'dev', label: 'Dev Projects', color: '#a6e3a1' },
+    ];
+
+    function safeUrl(url) {
+      // allow http(s), mailto, relative paths and anchors; block javascript:/data:/vbscript:
+      const u = String(url || '').trim();
+      return u && !/^(javascript|data|vbscript):/i.test(u.replace(/\s/g, '')) ? u : '';
+    }
+
+    function renderWorkItem(item, color) {
+      const title = escapeHTML(String(item.title || 'Untitled'));
+      const url = safeUrl(item.url);
+      const titleHtml = url
+        ? `<a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="hover:underline decoration-1 underline-offset-4" style="text-decoration-color:${color}">${title}</a>`
+        : title;
+      const img = safeUrl(item.image);
+      const tags = (item.tags || []).map(t => `<span class="text-[#7f849c]">#${escapeHTML(String(t))}</span>`).join(' ');
+      const links = (item.links || [])
+        .filter(l => safeUrl(l.url))
+        .map(l => `<a href="${escapeHTML(safeUrl(l.url))}" target="_blank" rel="noopener" class="hover:text-[#cdd6f4] transition" style="color:${color}">[${escapeHTML(String(l.label || 'link'))}]</a>`)
+        .join(' ');
+      return `
+        <li class="flex gap-4 py-3">
+          ${img ? `<img src="${escapeHTML(img)}" alt="" loading="lazy" class="w-20 h-14 sm:w-28 sm:h-20 object-cover rounded border border-[#313244] shrink-0 bg-[#181825]">` : ''}
+          <div class="min-w-0 flex-1 space-y-1">
+            <div class="flex items-baseline justify-between gap-3">
+              <h3 class="font-semibold text-[#cdd6f4] text-sm leading-snug">${titleHtml}</h3>
+              ${item.year ? `<span class="text-xs text-[#6c7086] shrink-0">${escapeHTML(String(item.year))}</span>` : ''}
+            </div>
+            ${item.meta ? `<p class="text-xs text-[#a6adc8]">${escapeHTML(String(item.meta))}</p>` : ''}
+            ${item.desc ? `<p class="text-xs text-[#7f849c] leading-relaxed">${escapeHTML(String(item.desc))}</p>` : ''}
+            ${(tags || links) ? `<p class="text-xs flex flex-wrap gap-x-3 gap-y-1 pt-0.5">${links}${links && tags ? '<span class="text-[#45475a]">·</span>' : ''}${tags}</p>` : ''}
+          </div>
+        </li>`;
+    }
+
+    function renderWorks(filter = 'all') {
+      const list = document.getElementById('works-list');
+      list.innerHTML = WORK_GROUPS
+        .filter(g => filter === 'all' || filter === g.key)
+        .map(g => {
+          const items = WORKS[g.key] || [];
+          return `
+            <div>
+              <h2 class="text-xs uppercase tracking-widest font-semibold pb-1 border-b border-[#313244]" style="color:${g.color}">
+                ${g.label} <span class="text-[#6c7086] normal-case tracking-normal">(${items.length})</span>
+              </h2>
+              ${items.length
+                ? `<ul class="divide-y divide-[#313244]/60">${items.map(i => renderWorkItem(i, g.color)).join('')}</ul>`
+                : `<p class="py-3 text-xs text-[#6c7086] italic">Coming soon.</p>`}
+            </div>`;
+        }).join('');
+      document.querySelectorAll('#works-filter button').forEach(b => {
+        const on = b.dataset.filter === filter;
+        b.classList.toggle('text-[#cdd6f4]', on);
+        b.classList.toggle('underline', on);
+        b.classList.toggle('underline-offset-4', on);
+      });
+    }
+    document.querySelectorAll('#works-filter button').forEach(b =>
+      b.addEventListener('click', () => renderWorks(b.dataset.filter)));
+    renderWorks();
+
     // Focus the input when clicking empty terminal space (desktop only,
     // never while selecting text or clicking a link/button)
     const isTouch = window.matchMedia('(hover: none)').matches;
@@ -433,7 +526,7 @@
     });
 
     // Command history + Tab completion
-    const COMMANDS = ['help', 'projects', 'ls', 'lab', 'neofetch', 'about', 'whoami', 'github', 'python', 'quote', 'date', 'history', 'clear', 'cd'];
+    const COMMANDS = ['help', 'projects', 'ls', 'works', 'lab', 'neofetch', 'about', 'whoami', 'github', 'python', 'quote', 'date', 'history', 'clear', 'cd'];
     const history = [];
     let historyIndex = 0;
 
@@ -473,8 +566,9 @@
     function executeCommand(cmd) {
       let lowerCmd = cmd.toLowerCase().trim().replace(/\s+/g, ' ');
       // `cd projects` / `cd lab` / `cd ~` behave like tab switches
-      const cdMap = { 'cd projects': 'projects', 'cd apps': 'projects', 'cd lab': 'lab', 'cd ~': 'home', 'cd': 'home', 'cd about': 'about' };
+      const cdMap = { 'cd projects': 'projects', 'cd apps': 'projects', 'cd lab': 'lab', 'cd works': 'works', 'cd ~': 'home', 'cd': 'home', 'cd about': 'about' };
       let cdTarget = null;
+      let keepScroll = false; // commands that jump to a section shouldn't auto-scroll to bottom
       if (lowerCmd === 'cd' || lowerCmd.startsWith('cd ')) {
         cdTarget = cdMap[lowerCmd] || null;
         lowerCmd = 'cd';
@@ -505,10 +599,11 @@
               <p class="text-[#89dceb] font-semibold">Available Commands:</p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 <div><span class="text-[#a6e3a1] font-mono">projects</span> / <span class="text-[#a6e3a1] font-mono">ls</span> : List mini-apps</div>
+                <div><span class="text-[#a6e3a1] font-mono">works</span> : Academic work &amp; dev projects</div>
                 <div><span class="text-[#a6e3a1] font-mono">lab</span> : List experiments</div>
                 <div><span class="text-[#a6e3a1] font-mono">neofetch</span> / <span class="text-[#a6e3a1] font-mono">about</span> : Display system info</div>
                 <div><span class="text-[#a6e3a1] font-mono">whoami</span> : Who runs this place</div>
-                <div><span class="text-[#a6e3a1] font-mono">cd</span> &lt;projects|lab|about|~&gt; : Jump to section</div>
+                <div><span class="text-[#a6e3a1] font-mono">cd</span> &lt;projects|works|lab|about|~&gt; : Jump to section</div>
                 <div><span class="text-[#a6e3a1] font-mono">github</span> : Open GitHub Profile</div>
                 <div><span class="text-[#a6e3a1] font-mono">python</span> : Run Python script sample</div>
                 <div><span class="text-[#a6e3a1] font-mono">quote</span> : Display favorite motto</div>
@@ -547,6 +642,12 @@
           `;
           break;
 
+        case 'works':
+          switchTab('works');
+          keepScroll = true;
+          response.innerHTML = `<span class="text-[#89b4fa]">${(WORKS.academic || []).length} academic · ${(WORKS.dev || []).length} dev projects</span> <span class="text-[#7f849c]">— scrolled to works.md</span>`;
+          break;
+
         case 'whoami':
           response.innerHTML = `<span class="text-[#89b4fa]">changlin</span> <span class="text-[#7f849c]">— WU Changlin, builder of small web things. Try <span class="text-[#a6e3a1]">neofetch</span> for details.</span>`;
           break;
@@ -554,6 +655,7 @@
         case 'cd':
           if (cdTarget) {
             switchTab(cdTarget);
+            keepScroll = true;
             response.innerHTML = `<span class="text-[#a6e3a1]">Moved to ${cdTarget === 'home' ? '~' : '~/' + cdTarget}</span>`;
           } else {
             response.innerHTML = `<span class="text-[#f38ba8]">cd: no such directory: ${escapeHTML(cmd.slice(2).trim())}. Try projects, lab, about or ~</span>`;
@@ -569,6 +671,7 @@
         case 'neofetch':
         case 'about':
           document.getElementById('section-neofetch').scrollIntoView({ behavior: 'smooth' });
+          keepScroll = true;
           response.innerHTML = `<span class="text-[#a6e3a1]">Scrolled to neofetch details card above.</span>`;
           break;
 
@@ -606,7 +709,7 @@
       cliLog.appendChild(logItem);
 
       // Auto scroll to bottom
-      terminalBody.scrollTop = terminalBody.scrollHeight;
+      if (!keepScroll) terminalBody.scrollTop = terminalBody.scrollHeight;
     }
 
     // Switch Tabs Logic
@@ -628,6 +731,8 @@
         document.getElementById('section-neofetch').scrollIntoView({ behavior: 'smooth' });
       } else if (tab === 'projects') {
         document.getElementById('section-projects').scrollIntoView({ behavior: 'smooth' });
+      } else if (tab === 'works') {
+        document.getElementById('section-works').scrollIntoView({ behavior: 'smooth' });
       } else if (tab === 'lab') {
         document.getElementById('section-lab').scrollIntoView({ behavior: 'smooth' });
       }
